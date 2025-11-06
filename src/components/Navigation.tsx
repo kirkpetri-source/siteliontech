@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, ShoppingCart, Shield, LogIn } from "lucide-react";
+import { Menu, X, Shield, LogIn } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { Cart } from "./Cart";
 import logo from "@/assets/logo-lion-tech.jpg";
 
 export const Navigation = () => {
@@ -58,10 +59,9 @@ export const Navigation = () => {
                 </Button>
               </Link>
             )}
-            <Button variant="hero" size="sm" className="ml-4">
-              <ShoppingCart className="h-4 w-4" />
-              Carrinho
-            </Button>
+            <div className="ml-4">
+              <Cart />
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -104,10 +104,9 @@ export const Navigation = () => {
                 </Button>
               </Link>
             )}
-            <Button variant="hero" size="sm" className="w-full">
-              <ShoppingCart className="h-4 w-4" />
-              Carrinho
-            </Button>
+            <div className="pt-2">
+              <Cart />
+            </div>
           </div>
         )}
       </div>
