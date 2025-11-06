@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { FolderOpen, Plus, Edit, Trash, Save, X } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -50,6 +51,11 @@ interface Category {
   created_at: string;
   updated_at: string;
 }
+
+const iconOptions = [
+  "Package", "Laptop", "Smartphone", "Monitor", "Cpu", "HardDrive",
+  "Keyboard", "Mouse", "Headphones", "Speaker", "Wifi", "UsbCable"
+];
 
 const categorySchema = z.object({
   name: z.string()
@@ -308,7 +314,7 @@ export const CategoriesManager = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Cor</TableHead>
+                <TableHead>Ícone</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Slug</TableHead>
                 <TableHead>Descrição</TableHead>
@@ -318,30 +324,35 @@ export const CategoriesManager = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell>
-                    <div
-                      className="w-8 h-8 rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{category.slug}</TableCell>
-                  <TableCell className="max-w-xs truncate">
-                    {category.description || "-"}
-                  </TableCell>
-                  <TableCell>{category.display_order}</TableCell>
-                  <TableCell>
-                    {category.active ? (
-                      <Badge variant="default">Ativo</Badge>
-                    ) : (
-                      <Badge variant="secondary">Inativo</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
+              {categories.map((category) => {
+                const IconComponent = category.icon ? (LucideIcons as any)[category.icon] : null;
+                return (
+                  <TableRow key={category.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {IconComponent && <IconComponent className="h-5 w-5" style={{ color: category.color }} />}
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: category.color }}
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{category.slug}</TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {category.description || "-"}
+                    </TableCell>
+                    <TableCell>{category.display_order}</TableCell>
+                    <TableCell>
+                      {category.active ? (
+                        <Badge variant="default">Ativo</Badge>
+                      ) : (
+                        <Badge variant="secondary">Inativo</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(category)}
@@ -360,7 +371,8 @@ export const CategoriesManager = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
@@ -429,54 +441,69 @@ export const CategoriesManager = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="color">Cor</Label>
-                <Input
-                  id="color"
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
-                />
-                {formErrors.color && (
-                  <p className="text-sm text-destructive">{formErrors.color}</p>
-                )}
-              </div>
+              <div className="grid grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="icon">Ícone</Label>
+                  <select
+                    id="icon"
+                    value={formData.icon}
+                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  >
+                    <option value="">Sem ícone</option>
+                    {iconOptions.map((icon) => (
+                      <option key={icon} value={icon}>{icon}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="display_order">Ordem de Exibição</Label>
-                <Input
-                  id="display_order"
-                  type="number"
-                  value={formData.display_order}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      display_order: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  min={0}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="active">Status</Label>
-                <div className="flex items-center space-x-2 pt-2">
-                  <Switch
-                    id="active"
-                    checked={formData.active}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, active: checked })
+                <div className="space-y-2">
+                  <Label htmlFor="color">Cor</Label>
+                  <Input
+                    id="color"
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) =>
+                      setFormData({ ...formData, color: e.target.value })
                     }
                   />
-                  <Label htmlFor="active">
-                    {formData.active ? "Ativo" : "Inativo"}
-                  </Label>
+                  {formErrors.color && (
+                    <p className="text-sm text-destructive">{formErrors.color}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="display_order">Ordem de Exibição</Label>
+                  <Input
+                    id="display_order"
+                    type="number"
+                    value={formData.display_order}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        display_order: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    min={0}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="active">Status</Label>
+                  <div className="flex items-center space-x-2 pt-2">
+                    <Switch
+                      id="active"
+                      checked={formData.active}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, active: checked })
+                      }
+                    />
+                    <Label htmlFor="active">
+                      {formData.active ? "Ativo" : "Inativo"}
+                    </Label>
+                  </div>
                 </div>
               </div>
-            </div>
           </div>
 
           <DialogFooter>

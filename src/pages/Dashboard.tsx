@@ -16,6 +16,8 @@ import { BackupsManager } from "@/components/dashboard/BackupsManager";
 import { PermissionsManager } from "@/components/dashboard/PermissionsManager";
 import { RolesManager } from "@/components/dashboard/RolesManager";
 import { CategoriesManager } from "@/components/dashboard/CategoriesManager";
+import { ServicesManager } from "@/components/dashboard/ServicesManager";
+import { CasesManager } from "@/components/dashboard/CasesManager";
 import { Shield, LogOut } from "lucide-react";
 
 const Dashboard = () => {
@@ -67,17 +69,17 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-10 max-w-7xl">
+            <TabsList className="grid w-full lg:grid-cols-6 md:grid-cols-3 grid-cols-2 max-w-7xl">
               <TabsTrigger value="orders">Pedidos</TabsTrigger>
-              <TabsTrigger value="contacts">Contatos</TabsTrigger>
               <TabsTrigger value="products">Produtos</TabsTrigger>
               <TabsTrigger value="categories">Categorias</TabsTrigger>
+              <TabsTrigger value="services">Serviços</TabsTrigger>
+              <TabsTrigger value="cases">Cases</TabsTrigger>
               <TabsTrigger value="inventory">Inventário</TabsTrigger>
+              <TabsTrigger value="contacts">Contatos</TabsTrigger>
               <TabsTrigger value="coupons">Cupons</TabsTrigger>
-              <TabsTrigger value="backups">Backups</TabsTrigger>
-              <TabsTrigger value="permissions">Permissões</TabsTrigger>
-              <TabsTrigger value="roles">Roles</TabsTrigger>
               <TabsTrigger value="stats">Estatísticas</TabsTrigger>
+              <TabsTrigger value="backups">Backups</TabsTrigger>
             </TabsList>
 
             <TabsContent value="orders" className="space-y-4">
@@ -96,28 +98,32 @@ const Dashboard = () => {
               <CategoriesManager />
             </TabsContent>
 
+            <TabsContent value="services" className="space-y-4">
+              <ServicesManager />
+            </TabsContent>
+
+            <TabsContent value="cases" className="space-y-4">
+              <CasesManager />
+            </TabsContent>
+
             <TabsContent value="inventory" className="space-y-4">
               <InventoryManager />
+            </TabsContent>
+
+            <TabsContent value="contacts" className="space-y-4">
+              <ContactsList />
             </TabsContent>
 
             <TabsContent value="coupons" className="space-y-4">
               <CouponsManager />
             </TabsContent>
 
-            <TabsContent value="backups" className="space-y-4">
-              <BackupsManager />
-            </TabsContent>
-
-            <TabsContent value="permissions" className="space-y-4">
-              <PermissionsManager />
-            </TabsContent>
-
-            <TabsContent value="roles" className="space-y-4">
-              <RolesManager />
-            </TabsContent>
-
             <TabsContent value="stats" className="space-y-4">
               <SalesStats />
+            </TabsContent>
+
+            <TabsContent value="backups" className="space-y-4">
+              <BackupsManager />
             </TabsContent>
           </Tabs>
         </div>

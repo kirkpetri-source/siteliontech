@@ -1,66 +1,51 @@
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ServiceCard } from "@/components/ServiceCard";
-import { Wrench, Cpu, Smartphone, Network, Users, HardDrive, Monitor } from "lucide-react";
-import repairImage from "@/assets/service-repair.jpg";
-import upgradeImage from "@/assets/service-upgrade.jpg";
-import appleImage from "@/assets/service-apple.jpg";
+import { supabase } from "@/integrations/supabase/client";
+import { Wrench } from "lucide-react";
+import * as LucideIcons from "lucide-react";
+
+interface Service {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  price: string | null;
+  image_url: string | null;
+  active: boolean;
+}
 
 const Servicos = () => {
-  const services = [
-    {
-      title: "Manutenção de PCs e Notebooks",
-      description: "Diagnóstico completo, limpeza interna, troca de componentes defeituosos e resolução de problemas de hardware e software.",
-      icon: Monitor,
-      price: "A partir de R$ 80",
-      image: repairImage,
-    },
-    {
-      title: "Upgrades SSD e RAM",
-      description: "Aumente drasticamente a velocidade do seu computador com instalação de SSD NVMe e upgrade de memória RAM.",
-      icon: Cpu,
-      price: "A partir de R$ 150",
-      image: upgradeImage,
-    },
-    {
-      title: "Assistência Apple",
-      description: "Manutenção especializada em MacBooks, iMacs, iPhones e iPads. Reparos em tela, bateria, placa lógica e mais.",
-      icon: Smartphone,
-      price: "Consulte",
-      image: appleImage,
-    },
-    {
-      title: "Redes e CFTV",
-      description: "Instalação e configuração de redes cabeadas e Wi-Fi, câmeras de segurança e sistemas de monitoramento.",
-      icon: Network,
-      price: "A partir de R$ 200",
-    },
-    {
-      title: "Formatação e Limpeza",
-      description: "Formatação completa do sistema, instalação de drivers, programas essenciais e remoção de vírus.",
-      icon: HardDrive,
-      price: "A partir de R$ 100",
-    },
-    {
-      title: "Suporte Empresarial",
-      description: "Suporte técnico continuado para empresas, incluindo manutenção preventiva e atendimento prioritário.",
-      icon: Users,
-      price: "Planos mensais",
-    },
-    {
-      title: "Montagem de PCs",
-      description: "Montagem profissional de computadores gamers e profissionais com as melhores configurações para sua necessidade.",
-      icon: Wrench,
-      price: "A partir de R$ 150",
-    },
-    {
-      title: "Recuperação de Dados",
-      description: "Recuperação profissional de dados perdidos em HDs, SSDs e pen drives danificados.",
-      icon: HardDrive,
-      price: "Sob consulta",
-    },
-  ];
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('services' as any)
+        .select('*')
+        .eq('active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setServices((data as any) || []);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIconComponent = (iconName: string | null) => {
+    if (!iconName) return Wrench;
+    return (LucideIcons as any)[iconName] || Wrench;
+  };
 
   const features = [
     "Diagnóstico gratuito",
@@ -113,17 +98,29 @@ const Servicos = () => {
       {/* Services Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {services.map((service, index) => (
-              <div
-                key={index}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 80}ms` }}
-              >
-                <ServiceCard {...service} />
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {services.map((service, index) => (
+                <div
+                  key={service.id}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 80}ms` }}
+                >
+                  <ServiceCard 
+                    title={service.name}
+                    description={service.description || ""}
+                    icon={getIconComponent(service.icon)}
+                    price={service.price || ""}
+                    image={service.image_url || undefined}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

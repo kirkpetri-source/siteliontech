@@ -7,12 +7,21 @@ import { ProductFilters } from "@/components/ProductFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { Package } from "lucide-react";
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string | null;
+  color: string;
+}
+
 interface Product {
   id: string;
   name: string;
   description: string | null;
   price: number;
   category: string;
+  category_id: string | null;
   brand: string;
   image_url: string | null;
   stock: number;
@@ -21,6 +30,7 @@ interface Product {
 
 const Loja = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
@@ -28,23 +38,38 @@ const Loja = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [showFilters, setShowFilters] = useState(false);
 
-  const categories = ["Todos", "notebooks", "desktops", "perifericos", "componentes"];
   const brands = ["Todos", "Dell", "Lenovo", "HP", "Asus", "Apple"];
 
   useEffect(() => {
+    fetchCategories();
     fetchProducts();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories' as any)
+        .select('id, name, slug, icon, color')
+        .eq('active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setCategories((data as any) || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, categories(id, name, slug)')
         .order('featured', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProducts(data || []);
+      setProducts((data as any) || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -52,11 +77,17 @@ const Loja = () => {
     }
   };
 
+  const categoryOptions = ["Todos", ...categories.map(c => c.slug)];
+
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
+      
+      // Match by category slug from the categories table
+      const productCategorySlug = (product as any).categories?.slug || product.category;
+      const matchesCategory = selectedCategory === "Todos" || productCategorySlug === selectedCategory;
+      
       const matchesBrand = selectedBrand === "Todos" || product.brand === selectedBrand;
       const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
 
@@ -98,7 +129,7 @@ const Loja = () => {
             setSelectedBrand={setSelectedBrand}
             priceRange={priceRange}
             setPriceRange={setPriceRange}
-            categories={categories}
+            categories={categoryOptions}
             brands={brands}
             showFilters={showFilters}
             setShowFilters={setShowFilters}

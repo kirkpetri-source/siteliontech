@@ -1,12 +1,46 @@
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { BeforeAfter } from "@/components/BeforeAfter";
 import { TestimonialCard } from "@/components/TestimonialCard";
-import { cases, testimonials } from "@/lib/mockData";
+import { testimonials } from "@/lib/mockData";
+import { supabase } from "@/integrations/supabase/client";
 import { Award, Users, CheckCircle2, Star } from "lucide-react";
 
+interface Case {
+  id: string;
+  title: string;
+  description: string | null;
+  before_image: string;
+  after_image: string;
+  active: boolean;
+}
+
 const Cases = () => {
+  const [cases, setCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCases();
+  }, []);
+
+  const fetchCases = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('cases' as any)
+        .select('*')
+        .eq('active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setCases((data as any) || []);
+    } catch (error) {
+      console.error('Error fetching cases:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   const stats = [
     { label: "Clientes Atendidos", value: "500+", icon: Users },
     { label: "Projetos Concluídos", value: "1000+", icon: CheckCircle2 },
@@ -67,17 +101,29 @@ const Cases = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {cases.map((caseItem, index) => (
-              <div
-                key={caseItem.id}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
-                <BeforeAfter {...caseItem} />
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {cases.map((caseItem, index) => (
+                <div
+                  key={caseItem.id}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 150}ms` }}
+                >
+                  <BeforeAfter 
+                    title={caseItem.title}
+                    description={caseItem.description || ""}
+                    beforeImage={caseItem.before_image}
+                    afterImage={caseItem.after_image}
+                    category="Reparos"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
