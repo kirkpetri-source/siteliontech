@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Phone, Mail, Clock, Upload, Send, Navigation2 } from "lucide-react";
 
 const Contato = () => {
@@ -38,8 +39,6 @@ const Contato = () => {
     setIsSubmitting(true);
 
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
-
       // Send notification to business WhatsApp
       const businessNotification = await supabase.functions.invoke('send-whatsapp', {
         body: {
