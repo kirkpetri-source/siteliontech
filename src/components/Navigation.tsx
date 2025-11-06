@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, ShoppingCart } from "lucide-react";
+import { Menu, X, ShoppingCart, Shield, LogIn } from "lucide-react";
 import { Button } from "./ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo-lion-tech.jpg";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, isAdmin } = useAuth();
 
   const navItems = [
     { label: "Início", href: "/" },
@@ -39,6 +41,23 @@ export const Navigation = () => {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/dashboard"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-primary hover:bg-accent/50 transition-all flex items-center gap-2"
+              >
+                <Shield className="h-4 w-4" />
+                Dashboard
+              </Link>
+            )}
+            {!user && (
+              <Link to="/auth">
+                <Button variant="outline" size="sm" className="ml-4">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
+              </Link>
+            )}
             <Button variant="hero" size="sm" className="ml-4">
               <ShoppingCart className="h-4 w-4" />
               Carrinho
@@ -67,6 +86,24 @@ export const Navigation = () => {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/dashboard"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-accent/50 transition-all"
+              >
+                <Shield className="h-4 w-4" />
+                Dashboard
+              </Link>
+            )}
+            {!user && (
+              <Link to="/auth" onClick={() => setIsOpen(false)}>
+                <Button variant="outline" size="sm" className="w-full">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
+              </Link>
+            )}
             <Button variant="hero" size="sm" className="w-full">
               <ShoppingCart className="h-4 w-4" />
               Carrinho
