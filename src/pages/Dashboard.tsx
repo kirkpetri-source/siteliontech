@@ -13,6 +13,8 @@ import { SalesStats } from "@/components/dashboard/SalesStats";
 import { OrdersList } from "@/components/dashboard/OrdersList";
 import { InventoryManager } from "@/components/dashboard/InventoryManager";
 import { BackupsManager } from "@/components/dashboard/BackupsManager";
+import { PermissionsManager } from "@/components/dashboard/PermissionsManager";
+import { RolesManager } from "@/components/dashboard/RolesManager";
 import { Shield, LogOut } from "lucide-react";
 
 const Dashboard = () => {
@@ -64,13 +66,15 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-7 max-w-6xl">
+            <TabsList className="grid w-full grid-cols-9 max-w-7xl">
               <TabsTrigger value="orders">Pedidos</TabsTrigger>
               <TabsTrigger value="contacts">Contatos</TabsTrigger>
               <TabsTrigger value="products">Produtos</TabsTrigger>
               <TabsTrigger value="inventory">Inventário</TabsTrigger>
               <TabsTrigger value="coupons">Cupons</TabsTrigger>
               <TabsTrigger value="backups">Backups</TabsTrigger>
+              <TabsTrigger value="permissions">Permissões</TabsTrigger>
+              <TabsTrigger value="roles">Roles</TabsTrigger>
               <TabsTrigger value="stats">Estatísticas</TabsTrigger>
             </TabsList>
 
@@ -96,6 +100,14 @@ const Dashboard = () => {
 
             <TabsContent value="backups" className="space-y-4">
               <BackupsManager />
+            </TabsContent>
+
+            <TabsContent value="permissions" className="space-y-4">
+              <PermissionsManager />
+            </TabsContent>
+
+            <TabsContent value="roles" className="space-y-4">
+              <RolesManager />
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-4">
