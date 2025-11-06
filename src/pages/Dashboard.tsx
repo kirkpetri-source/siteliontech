@@ -1,11 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrderNotifications } from "@/hooks/useOrderNotifications";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ContactsList } from "@/components/dashboard/ContactsList";
 import { ProductsManager } from "@/components/dashboard/ProductsManager";
 import { CouponsManager } from "@/components/dashboard/CouponsManager";
@@ -13,17 +12,33 @@ import { SalesStats } from "@/components/dashboard/SalesStats";
 import { OrdersList } from "@/components/dashboard/OrdersList";
 import { InventoryManager } from "@/components/dashboard/InventoryManager";
 import { BackupsManager } from "@/components/dashboard/BackupsManager";
-import { PermissionsManager } from "@/components/dashboard/PermissionsManager";
-import { RolesManager } from "@/components/dashboard/RolesManager";
 import { CategoriesManager } from "@/components/dashboard/CategoriesManager";
 import { ServicesManager } from "@/components/dashboard/ServicesManager";
 import { CasesManager } from "@/components/dashboard/CasesManager";
-import { Shield, LogOut } from "lucide-react";
+import { 
+  Shield, 
+  LogOut, 
+  ShoppingCart, 
+  Package, 
+  FileText, 
+  Tag, 
+  MessageSquare, 
+  Settings,
+  ChevronDown,
+  LayoutDashboard
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Dashboard = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const { markAsRead } = useOrderNotifications();
+  const [activeSection, setActiveSection] = useState("orders");
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -68,64 +83,117 @@ const Dashboard = () => {
             </Button>
           </div>
 
-          <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full lg:grid-cols-6 md:grid-cols-3 grid-cols-2 max-w-7xl">
-              <TabsTrigger value="orders">Pedidos</TabsTrigger>
-              <TabsTrigger value="products">Produtos</TabsTrigger>
-              <TabsTrigger value="categories">Categorias</TabsTrigger>
-              <TabsTrigger value="services">Serviços</TabsTrigger>
-              <TabsTrigger value="cases">Cases</TabsTrigger>
-              <TabsTrigger value="inventory">Inventário</TabsTrigger>
-              <TabsTrigger value="contacts">Contatos</TabsTrigger>
-              <TabsTrigger value="coupons">Cupons</TabsTrigger>
-              <TabsTrigger value="stats">Estatísticas</TabsTrigger>
-              <TabsTrigger value="backups">Backups</TabsTrigger>
-            </TabsList>
+          {/* Menu de Navegação */}
+          <div className="flex flex-wrap gap-2 mb-8 p-4 glass rounded-xl">
+            <Button
+              variant={activeSection === "orders" ? "default" : "ghost"}
+              onClick={() => setActiveSection("orders")}
+              className="gap-2"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Pedidos
+            </Button>
 
-            <TabsContent value="orders" className="space-y-4">
-              <OrdersList />
-            </TabsContent>
+            <Button
+              variant={activeSection === "stats" ? "default" : "ghost"}
+              onClick={() => setActiveSection("stats")}
+              className="gap-2"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              Estatísticas
+            </Button>
 
-            <TabsContent value="contacts" className="space-y-4">
-              <ContactsList />
-            </TabsContent>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant={["products", "categories", "inventory"].includes(activeSection) ? "default" : "ghost"}
+                  className="gap-2"
+                >
+                  <Package className="h-4 w-4" />
+                  Produtos
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-background border shadow-lg z-50">
+                <DropdownMenuItem onClick={() => setActiveSection("products")} className="cursor-pointer">
+                  <Package className="h-4 w-4 mr-2" />
+                  Gerenciar Produtos
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveSection("categories")} className="cursor-pointer">
+                  <Tag className="h-4 w-4 mr-2" />
+                  Categorias
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveSection("inventory")} className="cursor-pointer">
+                  <Package className="h-4 w-4 mr-2" />
+                  Inventário
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            <TabsContent value="products" className="space-y-4">
-              <ProductsManager />
-            </TabsContent>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant={["services", "cases"].includes(activeSection) ? "default" : "ghost"}
+                  className="gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Conteúdo
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-background border shadow-lg z-50">
+                <DropdownMenuItem onClick={() => setActiveSection("services")} className="cursor-pointer">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Serviços
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveSection("cases")} className="cursor-pointer">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Cases de Sucesso
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            <TabsContent value="categories" className="space-y-4">
-              <CategoriesManager />
-            </TabsContent>
+            <Button
+              variant={activeSection === "coupons" ? "default" : "ghost"}
+              onClick={() => setActiveSection("coupons")}
+              className="gap-2"
+            >
+              <Tag className="h-4 w-4" />
+              Cupons
+            </Button>
 
-            <TabsContent value="services" className="space-y-4">
-              <ServicesManager />
-            </TabsContent>
+            <Button
+              variant={activeSection === "contacts" ? "default" : "ghost"}
+              onClick={() => setActiveSection("contacts")}
+              className="gap-2"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Contatos
+            </Button>
 
-            <TabsContent value="cases" className="space-y-4">
-              <CasesManager />
-            </TabsContent>
+            <Button
+              variant={activeSection === "backups" ? "default" : "ghost"}
+              onClick={() => setActiveSection("backups")}
+              className="gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              Backups
+            </Button>
+          </div>
 
-            <TabsContent value="inventory" className="space-y-4">
-              <InventoryManager />
-            </TabsContent>
-
-            <TabsContent value="contacts" className="space-y-4">
-              <ContactsList />
-            </TabsContent>
-
-            <TabsContent value="coupons" className="space-y-4">
-              <CouponsManager />
-            </TabsContent>
-
-            <TabsContent value="stats" className="space-y-4">
-              <SalesStats />
-            </TabsContent>
-
-            <TabsContent value="backups" className="space-y-4">
-              <BackupsManager />
-            </TabsContent>
-          </Tabs>
+          {/* Conteúdo das Seções */}
+          <div className="space-y-6">
+            {activeSection === "orders" && <OrdersList />}
+            {activeSection === "stats" && <SalesStats />}
+            {activeSection === "products" && <ProductsManager />}
+            {activeSection === "categories" && <CategoriesManager />}
+            {activeSection === "inventory" && <InventoryManager />}
+            {activeSection === "services" && <ServicesManager />}
+            {activeSection === "cases" && <CasesManager />}
+            {activeSection === "coupons" && <CouponsManager />}
+            {activeSection === "contacts" && <ContactsList />}
+            {activeSection === "backups" && <BackupsManager />}
+          </div>
         </div>
       </section>
 
