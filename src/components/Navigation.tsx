@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Shield, LogIn } from "lucide-react";
+import { Menu, X, Shield, LogIn, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,7 +10,7 @@ import logo from "@/assets/logo-lion-tech.jpg";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { newOrdersCount } = useOrderNotifications();
 
   const navItems = [
@@ -62,7 +62,17 @@ export const Navigation = () => {
                 )}
               </Link>
             )}
-            {!user && (
+            {user ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-4"
+                onClick={() => signOut()}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </Button>
+            ) : (
               <Link to="/auth">
                 <Button variant="outline" size="sm" className="ml-4">
                   <LogIn className="h-4 w-4 mr-2" />
@@ -115,7 +125,20 @@ export const Navigation = () => {
                 )}
               </Link>
             )}
-            {!user && (
+            {user ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => {
+                  setIsOpen(false);
+                  signOut();
+                }}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </Button>
+            ) : (
               <Link to="/auth" onClick={() => setIsOpen(false)}>
                 <Button variant="outline" size="sm" className="w-full">
                   <LogIn className="h-4 w-4 mr-2" />
