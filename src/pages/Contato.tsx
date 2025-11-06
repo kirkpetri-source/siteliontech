@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -344,7 +343,6 @@ const Contato = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton message="Olá! Gostaria de entrar em contato com a Lion Tech." />
     </div>
   );
 };

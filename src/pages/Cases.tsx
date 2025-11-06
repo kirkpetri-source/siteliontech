@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { BeforeAfter } from "@/components/BeforeAfter";
 import { TestimonialCard } from "@/components/TestimonialCard";
 import { testimonials } from "@/lib/mockData";
@@ -172,7 +171,6 @@ const Cases = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton message="Olá! Vi os cases de sucesso e gostaria de fazer um orçamento." />
     </div>
   );
 };

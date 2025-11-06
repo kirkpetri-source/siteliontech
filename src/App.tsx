@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
+import { ChatWidget } from "@/components/ChatWidget";
 import Index from "./pages/Index";
 import Servicos from "./pages/Servicos";
 import Loja from "./pages/Loja";
@@ -27,6 +28,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
+            <ChatWidget />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/servicos" element={<Servicos />} />

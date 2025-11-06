@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductFilters } from "@/components/ProductFilters";
 import { supabase } from "@/integrations/supabase/client";
@@ -186,7 +185,6 @@ const Loja = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton message="Olá! Gostaria de saber sobre produtos disponíveis na loja." />
     </div>
   );
 };

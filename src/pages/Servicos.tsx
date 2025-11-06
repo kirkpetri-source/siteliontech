@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ServiceCard } from "@/components/ServiceCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Wrench } from "lucide-react";
@@ -183,7 +182,6 @@ const Servicos = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton message="Olá! Gostaria de saber mais sobre os serviços disponíveis." />
     </div>
   );
 };

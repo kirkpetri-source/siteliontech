@@ -16,6 +16,7 @@ import { CategoriesManager } from "@/components/dashboard/CategoriesManager";
 import { ServicesManager } from "@/components/dashboard/ServicesManager";
 import { CasesManager } from "@/components/dashboard/CasesManager";
 import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
+import { ChatTicketsManager } from "@/components/dashboard/ChatTicketsManager";
 import { 
   Shield, 
   LogOut, 
@@ -172,14 +173,28 @@ const Dashboard = () => {
               Cupons
             </Button>
 
-            <Button
-              variant={activeSection === "contacts" ? "default" : "ghost"}
-              onClick={() => setActiveSection("contacts")}
-              className="gap-2"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Contatos
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant={["contacts", "chat"].includes(activeSection) ? "default" : "ghost"}
+                  className="gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Comunicação
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-background border shadow-lg z-50">
+                <DropdownMenuItem onClick={() => setActiveSection("chat")} className="cursor-pointer">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Chat / Tickets
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveSection("contacts")} className="cursor-pointer">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Formulário Contato
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Button
               variant={activeSection === "backups" ? "default" : "ghost"}
@@ -202,6 +217,7 @@ const Dashboard = () => {
             {activeSection === "services" && <ServicesManager />}
             {activeSection === "cases" && <CasesManager />}
             {activeSection === "coupons" && <CouponsManager />}
+            {activeSection === "chat" && <ChatTicketsManager />}
             {activeSection === "contacts" && <ContactsList />}
             {activeSection === "backups" && <BackupsManager />}
           </div>

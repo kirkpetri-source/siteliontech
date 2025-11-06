@@ -1,6 +1,5 @@
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 const Politicas = () => {
   return (
@@ -20,7 +19,6 @@ const Politicas = () => {
         </div>
       </div>
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };

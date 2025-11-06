@@ -125,6 +125,148 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          evolution_status: string | null
+          id: string
+          message: string
+          sender: string
+          sent_at: string
+          ticket_id: string
+        }
+        Insert: {
+          evolution_status?: string | null
+          id?: string
+          message: string
+          sender: string
+          sent_at?: string
+          ticket_id: string
+        }
+        Update: {
+          evolution_status?: string | null
+          id?: string
+          message?: string
+          sender?: string
+          sent_at?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "chat_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_send_attempts: {
+        Row: {
+          attempt_number: number
+          attempted_at: string
+          error_message: string | null
+          id: string
+          status: string
+          ticket_id: string
+        }
+        Insert: {
+          attempt_number?: number
+          attempted_at?: string
+          error_message?: string | null
+          id?: string
+          status: string
+          ticket_id: string
+        }
+        Update: {
+          attempt_number?: number
+          attempted_at?: string
+          error_message?: string | null
+          id?: string
+          status?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_send_attempts_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "chat_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_settings: {
+        Row: {
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_tickets: {
+        Row: {
+          admin_notes: string | null
+          attachment_url: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          id: string
+          initial_message: string
+          lgpd_consent: boolean
+          page_url: string | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          id?: string
+          initial_message: string
+          lgpd_consent?: boolean
+          page_url?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          initial_message?: string
+          lgpd_consent?: boolean
+          page_url?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           client_type: string | null

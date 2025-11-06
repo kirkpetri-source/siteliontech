@@ -3,7 +3,6 @@ import { Navigation } from "@/components/Navigation";
 import { Hero } from "@/components/Hero";
 import { ServiceCard } from "@/components/ServiceCard";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { Cpu, Smartphone, Network, Monitor, Users, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -153,7 +152,6 @@ const Index = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton message="Olá! Vim pelo site e gostaria de mais informações sobre os serviços." />
     </div>
   );
 };

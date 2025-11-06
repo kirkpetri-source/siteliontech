@@ -1,6 +1,5 @@
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { Shield, Target, Eye, Heart, Users, Award } from "lucide-react";
 
 const Sobre = () => {
@@ -219,7 +218,6 @@ const Sobre = () => {
       </section>
 
       <Footer />
-      <WhatsAppButton message="Olá! Gostaria de conhecer mais sobre a Lion Tech." />
     </div>
   );
 };
