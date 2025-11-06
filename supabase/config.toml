@@ -2,3 +2,6 @@ project_id = "geunddzequooclxqtnvg"
 
 [functions.send-whatsapp]
 verify_jwt = false
+
+[functions.create-backup]
+verify_jwt = false
