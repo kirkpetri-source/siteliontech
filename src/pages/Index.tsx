@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Hero } from "@/components/Hero";
 import { ServiceCard } from "@/components/ServiceCard";
@@ -5,46 +6,43 @@ import { Footer } from "@/components/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { Cpu, Smartphone, Network, Monitor, Users, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import repairImage from "@/assets/service-repair.jpg";
-import upgradeImage from "@/assets/service-upgrade.jpg";
-import appleImage from "@/assets/service-apple.jpg";
+import { supabase } from "@/integrations/supabase/client";
+import * as LucideIcons from "lucide-react";
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  price: string;
+  image_url?: string;
+  display_order: number;
+}
 
 const Index = () => {
-  const services = [
-    {
-      title: "Manutenção de PCs e Notebooks",
-      description: "Diagnóstico completo, limpeza, troca de componentes e resolução de problemas.",
-      icon: Monitor,
-      price: "A partir de R$ 80",
-      image: repairImage,
-    },
-    {
-      title: "Upgrades SSD e RAM",
-      description: "Aumente a velocidade e performance do seu computador com upgrades profissionais.",
-      icon: Cpu,
-      price: "A partir de R$ 150",
-      image: upgradeImage,
-    },
-    {
-      title: "Assistência Apple",
-      description: "Manutenção especializada em MacBooks, iPhones e iPads.",
-      icon: Smartphone,
-      price: "Consulte",
-      image: appleImage,
-    },
-    {
-      title: "Redes e CFTV",
-      description: "Instalação e configuração de redes, câmeras e sistemas de segurança.",
-      icon: Network,
-      price: "A partir de R$ 200",
-    },
-    {
-      title: "Suporte Empresarial",
-      description: "Suporte técnico continuado para empresas e escritórios.",
-      icon: Users,
-      price: "Planos mensais",
-    },
-  ];
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("active", true)
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
 
   const howWeWork = [
     {
@@ -81,13 +79,28 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service, index) => (
-              <div key={index} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                <ServiceCard {...service} />
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {services.map((service, index) => {
+                const IconComponent = (LucideIcons as any)[service.icon] || Monitor;
+                return (
+                  <div key={service.id} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+                    <ServiceCard
+                      title={service.name}
+                      description={service.description || ""}
+                      icon={IconComponent}
+                      price={service.price}
+                      image={service.image_url}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

@@ -45,6 +45,8 @@ export const ServicesManager = () => {
     active: true,
     display_order: 0,
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchServices();
@@ -66,16 +68,42 @@ export const ServicesManager = () => {
     }
   };
 
+  const uploadImage = async (file: File) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `services/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUploading(true);
 
     try {
+      let imageUrl = formData.image_url;
+
+      // Upload image if new file selected
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+
       const serviceData = {
         name: formData.name,
         description: formData.description || null,
         icon: formData.icon,
         price: formData.price || null,
-        image_url: formData.image_url || null,
+        image_url: imageUrl || null,
         active: formData.active,
         display_order: formData.display_order,
       };
@@ -106,6 +134,8 @@ export const ServicesManager = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -146,6 +176,7 @@ export const ServicesManager = () => {
 
   const resetForm = () => {
     setEditingService(null);
+    setImageFile(null);
     setFormData({
       name: "",
       description: "",
@@ -255,17 +286,23 @@ export const ServicesManager = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="image_url">URL da Imagem</Label>
+                    <Label htmlFor="image_url">Imagem do Serviço (opcional)</Label>
                     <Input
                       id="image_url"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                      placeholder="https://..."
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) setImageFile(file);
+                      }}
                     />
+                    {formData.image_url && (
+                      <p className="text-xs text-muted-foreground">Imagem atual carregada</p>
+                    )}
                   </div>
 
-                  <Button type="submit" className="w-full">
-                    {editingService ? "Atualizar" : "Criar"} Serviço
+                  <Button type="submit" className="w-full" disabled={uploading}>
+                    {uploading ? "Fazendo upload..." : editingService ? "Atualizar" : "Criar"} Serviço
                   </Button>
                 </form>
               </DialogContent>

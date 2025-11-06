@@ -15,6 +15,7 @@ import { BackupsManager } from "@/components/dashboard/BackupsManager";
 import { CategoriesManager } from "@/components/dashboard/CategoriesManager";
 import { ServicesManager } from "@/components/dashboard/ServicesManager";
 import { CasesManager } from "@/components/dashboard/CasesManager";
+import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { 
   Shield, 
   LogOut, 
@@ -38,7 +39,7 @@ const Dashboard = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const { markAsRead } = useOrderNotifications();
-  const [activeSection, setActiveSection] = useState("orders");
+  const [activeSection, setActiveSection] = useState("overview");
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -85,6 +86,15 @@ const Dashboard = () => {
 
           {/* Menu de Navegação */}
           <div className="flex flex-wrap gap-2 mb-8 p-4 glass rounded-xl">
+            <Button
+              variant={activeSection === "overview" ? "default" : "ghost"}
+              onClick={() => setActiveSection("overview")}
+              className="gap-2"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              Visão Geral
+            </Button>
+
             <Button
               variant={activeSection === "orders" ? "default" : "ghost"}
               onClick={() => setActiveSection("orders")}
@@ -183,6 +193,7 @@ const Dashboard = () => {
 
           {/* Conteúdo das Seções */}
           <div className="space-y-6">
+            {activeSection === "overview" && <DashboardOverview />}
             {activeSection === "orders" && <OrdersList />}
             {activeSection === "stats" && <SalesStats />}
             {activeSection === "products" && <ProductsManager />}

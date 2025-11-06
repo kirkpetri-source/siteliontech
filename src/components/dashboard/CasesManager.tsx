@@ -37,6 +37,9 @@ export const CasesManager = () => {
     active: true,
     display_order: 0,
   });
+  const [beforeImageFile, setBeforeImageFile] = useState<File | null>(null);
+  const [afterImageFile, setAfterImageFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchCases();
@@ -58,15 +61,47 @@ export const CasesManager = () => {
     }
   };
 
+  const uploadImage = async (file: File, path: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `${path}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUploading(true);
 
     try {
+      let beforeImageUrl = formData.before_image;
+      let afterImageUrl = formData.after_image;
+
+      // Upload before image if new file selected
+      if (beforeImageFile) {
+        beforeImageUrl = await uploadImage(beforeImageFile, 'cases/before');
+      }
+
+      // Upload after image if new file selected
+      if (afterImageFile) {
+        afterImageUrl = await uploadImage(afterImageFile, 'cases/after');
+      }
+
       const caseData = {
         title: formData.title,
         description: formData.description || null,
-        before_image: formData.before_image,
-        after_image: formData.after_image,
+        before_image: beforeImageUrl,
+        after_image: afterImageUrl,
         active: formData.active,
         display_order: formData.display_order,
       };
@@ -97,6 +132,8 @@ export const CasesManager = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -136,6 +173,8 @@ export const CasesManager = () => {
 
   const resetForm = () => {
     setEditingCase(null);
+    setBeforeImageFile(null);
+    setAfterImageFile(null);
     setFormData({
       title: "",
       description: "",
@@ -193,24 +232,36 @@ export const CasesManager = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="before_image">URL Imagem Antes *</Label>
+                      <Label htmlFor="before_image">Imagem Antes *</Label>
                       <Input
                         id="before_image"
-                        value={formData.before_image}
-                        onChange={(e) => setFormData({ ...formData, before_image: e.target.value })}
-                        placeholder="https://..."
-                        required
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setBeforeImageFile(file);
+                        }}
+                        required={!formData.before_image && !editingCase}
                       />
+                      {formData.before_image && (
+                        <p className="text-xs text-muted-foreground">Imagem atual carregada</p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="after_image">URL Imagem Depois *</Label>
+                      <Label htmlFor="after_image">Imagem Depois *</Label>
                       <Input
                         id="after_image"
-                        value={formData.after_image}
-                        onChange={(e) => setFormData({ ...formData, after_image: e.target.value })}
-                        placeholder="https://..."
-                        required
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setAfterImageFile(file);
+                        }}
+                        required={!formData.after_image && !editingCase}
                       />
+                      {formData.after_image && (
+                        <p className="text-xs text-muted-foreground">Imagem atual carregada</p>
+                      )}
                     </div>
                   </div>
 
@@ -237,8 +288,8 @@ export const CasesManager = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full">
-                    {editingCase ? "Atualizar" : "Criar"} Case
+                  <Button type="submit" className="w-full" disabled={uploading}>
+                    {uploading ? "Fazendo upload..." : editingCase ? "Atualizar" : "Criar"} Case
                   </Button>
                 </form>
               </DialogContent>
