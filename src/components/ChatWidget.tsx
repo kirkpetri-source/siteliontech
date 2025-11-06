@@ -208,7 +208,7 @@ export const ChatWidget = () => {
       {/* Botão flutuante */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-primary to-primary/80 p-0 border-0 cursor-pointer flex items-center justify-center group"
+        className="fixed bottom-6 right-6 z-50 h-16 w-16 shadow-2xl hover:scale-110 transition-transform duration-300 bg-transparent p-0 border-0 cursor-pointer flex items-center justify-center group"
         aria-label="Abrir chat"
       >
         {isOpen ? (
