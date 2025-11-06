@@ -77,7 +77,8 @@ export const ChatWidget = () => {
 
   const validatePhone = (phone: string) => {
     const numbers = phone.replace(/\D/g, "");
-    return numbers.length === 11 && numbers.startsWith("55");
+    // Deve ter 11 dígitos: DDD (2) + 9 + número (8)
+    return numbers.length === 11;
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,11 +115,12 @@ export const ChatWidget = () => {
       return;
     }
 
-    const phoneWithCountryCode = "55" + formData.phone.replace(/\D/g, "");
-    if (!validatePhone(phoneWithCountryCode)) {
+    if (!validatePhone(formData.phone)) {
       toast.error("Telefone inválido. Use o formato (DD) 9XXXX-XXXX");
       return;
     }
+
+    const phoneWithCountryCode = "55" + formData.phone.replace(/\D/g, "");
 
     setIsSubmitting(true);
 
