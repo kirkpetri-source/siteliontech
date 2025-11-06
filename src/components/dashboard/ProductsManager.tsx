@@ -9,12 +9,20 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Package } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface Product {
   id: string;
   name: string;
   description: string | null;
   price: number;
   category: string;
+  category_id: string | null;
+  categories: Category | null;
   brand: string;
   image_url: string | null;
   stock: number;
@@ -23,6 +31,7 @@ interface Product {
 
 export const ProductsManager = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -32,7 +41,7 @@ export const ProductsManager = () => {
     name: "",
     description: "",
     price: "",
-    category: "notebooks",
+    category_id: "",
     brand: "Dell",
     image_url: "",
     stock: "0",
@@ -40,18 +49,35 @@ export const ProductsManager = () => {
   });
 
   useEffect(() => {
+    fetchCategories();
     fetchProducts();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories' as any)
+        .select('id, name, slug')
+        .eq('active', true)
+        .order('display_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setCategories((data as any) || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('*, categories(id, name, slug)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProducts(data || []);
+      setProducts((data as any) || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -63,11 +89,13 @@ export const ProductsManager = () => {
     e.preventDefault();
 
     try {
+      const selectedCategory = categories.find(c => c.id === formData.category_id);
       const productData = {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
-        category: formData.category,
+        category: selectedCategory?.name || "",
+        category_id: formData.category_id || null,
         brand: formData.brand,
         image_url: formData.image_url || null,
         stock: parseInt(formData.stock),
@@ -145,7 +173,7 @@ export const ProductsManager = () => {
       name: product.name,
       description: product.description || "",
       price: product.price.toString(),
-      category: product.category,
+      category_id: product.category_id || "",
       brand: product.brand,
       image_url: product.image_url || "",
       stock: product.stock.toString(),
@@ -160,7 +188,7 @@ export const ProductsManager = () => {
       name: "",
       description: "",
       price: "",
-      category: "notebooks",
+      category_id: categories.length > 0 ? categories[0].id : "",
       brand: "Dell",
       image_url: "",
       stock: "0",
@@ -235,15 +263,17 @@ export const ProductsManager = () => {
                   <Label htmlFor="category">Categoria *</Label>
                   <select
                     id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    value={formData.category_id}
+                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                     className="w-full h-10 px-3 rounded-md border border-input bg-background"
                     required
                   >
-                    <option value="notebooks">Notebooks</option>
-                    <option value="desktops">Desktops</option>
-                    <option value="perifericos">Periféricos</option>
-                    <option value="componentes">Componentes</option>
+                    <option value="">Selecione uma categoria</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -320,7 +350,7 @@ export const ProductsManager = () => {
                   <div>
                     <CardTitle>{product.name}</CardTitle>
                     <CardDescription>
-                      {product.category} • {product.brand}
+                      {product.categories?.name || product.category || "Sem categoria"} • {product.brand}
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">

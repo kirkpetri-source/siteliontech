@@ -50,6 +50,45 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          active: boolean | null
+          color: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           client_type: string | null
@@ -225,6 +264,7 @@ export type Database = {
         Row: {
           brand: string
           category: string
+          category_id: string | null
           created_at: string | null
           description: string | null
           featured: boolean | null
@@ -238,6 +278,7 @@ export type Database = {
         Insert: {
           brand: string
           category: string
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           featured?: boolean | null
@@ -251,6 +292,7 @@ export type Database = {
         Update: {
           brand?: string
           category?: string
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           featured?: boolean | null
@@ -261,7 +303,15 @@ export type Database = {
           stock?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
