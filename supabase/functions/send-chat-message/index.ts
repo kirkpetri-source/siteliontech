@@ -27,13 +27,15 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const evolutionBaseUrl = Deno.env.get("EVOLUTION_BASE_URL");
+    const evolutionBaseUrl = Deno.env.get("EVOLUTION_BASE_URL")?.replace(/\/+$/, ""); // Remove trailing slashes
     const evolutionInstance = Deno.env.get("EVOLUTION_INSTANCE");
     const evolutionToken = Deno.env.get("EVOLUTION_TOKEN");
     const whatsappAtendente = Deno.env.get("WHATSAPP_ATENDENTE");
 
     const body: ChatMessageRequest = await req.json();
     console.log("Received chat message request:", body);
+    console.log("Evolution Base URL:", evolutionBaseUrl);
+    console.log("Evolution Instance:", evolutionInstance);
 
     // Validar campos obrigatórios
     if (!body.customerPhone || !body.message || !body.ticketId) {
