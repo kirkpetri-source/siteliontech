@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -26,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Package, Eye, Loader2 } from "lucide-react";
+import { Package, Eye, Loader2, Bell } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -73,6 +74,7 @@ export function OrdersList() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [realtimeEnabled, setRealtimeEnabled] = useState(true);
   const { toast } = useToast();
 
   const fetchOrders = async () => {
@@ -99,25 +101,27 @@ export function OrdersList() {
   useEffect(() => {
     fetchOrders();
 
-    const channel = supabase
-      .channel("orders-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "orders",
-        },
-        () => {
-          fetchOrders();
-        }
-      )
-      .subscribe();
+    if (realtimeEnabled) {
+      const channel = supabase
+        .channel("orders-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "orders",
+          },
+          () => {
+            fetchOrders();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [realtimeEnabled]);
 
   const viewOrderDetails = async (order: Order) => {
     setSelectedOrder(order);
@@ -182,14 +186,25 @@ export function OrdersList() {
   return (
     <>
       <Card className="p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Package className="h-6 w-6 text-primary" />
-          <div>
-            <h2 className="text-2xl font-bold">Pedidos</h2>
-            <p className="text-sm text-muted-foreground">
-              Total: {orders.length} pedidos
-            </p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Package className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="text-2xl font-bold">Pedidos</h2>
+              <p className="text-sm text-muted-foreground">
+                Total: {orders.length} pedidos
+              </p>
+            </div>
           </div>
+          
+          {realtimeEnabled && (
+            <Alert className="max-w-xs">
+              <Bell className="h-4 w-4 animate-pulse text-primary" />
+              <AlertDescription className="text-xs">
+                Notificações em tempo real ativas
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <div className="rounded-lg border overflow-x-auto">

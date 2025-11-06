@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrderNotifications } from "@/hooks/useOrderNotifications";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -15,12 +16,18 @@ import { Shield, LogOut } from "lucide-react";
 const Dashboard = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const { markAsRead } = useOrderNotifications();
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
       navigate("/auth");
     }
   }, [user, isAdmin, loading, navigate]);
+
+  useEffect(() => {
+    // Mark notifications as read when viewing dashboard
+    markAsRead();
+  }, [markAsRead]);
 
   if (loading) {
     return (

@@ -2,13 +2,16 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, Shield, LogIn } from "lucide-react";
 import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrderNotifications } from "@/hooks/useOrderNotifications";
 import { Cart } from "./Cart";
 import logo from "@/assets/logo-lion-tech.jpg";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, isAdmin } = useAuth();
+  const { newOrdersCount } = useOrderNotifications();
 
   const navItems = [
     { label: "Início", href: "/" },
@@ -45,10 +48,18 @@ export const Navigation = () => {
             {isAdmin && (
               <Link
                 to="/dashboard"
-                className="px-4 py-2 rounded-lg text-sm font-medium text-primary hover:bg-accent/50 transition-all flex items-center gap-2"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-primary hover:bg-accent/50 transition-all flex items-center gap-2 relative"
               >
                 <Shield className="h-4 w-4" />
                 Dashboard
+                {newOrdersCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs animate-pulse"
+                  >
+                    {newOrdersCount}
+                  </Badge>
+                )}
               </Link>
             )}
             {!user && (
@@ -90,10 +101,18 @@ export const Navigation = () => {
               <Link
                 to="/dashboard"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-accent/50 transition-all"
+                className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-primary hover:bg-accent/50 transition-all relative"
               >
                 <Shield className="h-4 w-4" />
                 Dashboard
+                {newOrdersCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="ml-auto h-5 w-5 flex items-center justify-center p-0 text-xs animate-pulse"
+                  >
+                    {newOrdersCount}
+                  </Badge>
+                )}
               </Link>
             )}
             {!user && (
