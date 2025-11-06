@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { MessageCircle, X, Send, Paperclip } from "lucide-react";
 import { Button } from "./ui/button";
+import chatLionIcon from "@/assets/chat-lion-icon.png";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
@@ -203,24 +204,28 @@ export const ChatWidget = () => {
   return (
     <>
       {/* Botão flutuante */}
-      <Button
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300"
+        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-primary to-primary/80 p-0 border-0 cursor-pointer flex items-center justify-center group"
         aria-label="Abrir chat"
       >
         {isOpen ? (
-          <X className="h-6 w-6" />
+          <X className="h-6 w-6 text-white" />
         ) : (
           <>
-            <MessageCircle className="h-6 w-6" />
+            <img 
+              src={chatLionIcon} 
+              alt="Lion Tech Chat" 
+              className="h-12 w-12 object-contain group-hover:scale-105 transition-transform"
+            />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">
                 {unreadCount}
               </span>
             )}
           </>
         )}
-      </Button>
+      </button>
 
       {/* Widget do chat */}
       {isOpen && (
