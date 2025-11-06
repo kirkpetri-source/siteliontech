@@ -156,6 +156,42 @@ const Checkout = () => {
     setIsProcessing(true);
 
     try {
+      // Create order in database
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          customer_name: formData.name,
+          customer_email: formData.email,
+          customer_phone: formData.phone,
+          customer_address: formData.address,
+          payment_method: formData.paymentMethod,
+          subtotal: total,
+          discount: paymentDiscount + couponDiscount,
+          coupon_code: appliedCoupon?.code || null,
+          total: finalTotal,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = items.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        product_name: item.name,
+        product_price: item.price,
+        quantity: item.quantity,
+        total: item.price * item.quantity,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
       // Increment coupon usage if applied
       if (appliedCoupon) {
         await supabase
@@ -180,6 +216,7 @@ const Checkout = () => {
       }
       
       orderSummary += `\n✅ *Total Final:* R$ ${finalTotal.toFixed(2)}`;
+      orderSummary += `\n📝 *Pedido:* #${order.id.substring(0, 8).toUpperCase()}`;
 
       // Send WhatsApp notification
       const { error: whatsappError } = await supabase.functions.invoke('send-whatsapp', {
