@@ -229,7 +229,7 @@ export const ChatWidget = () => {
 
       {/* Widget do chat */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] bg-background border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-24 right-6 z-50 w-80 max-w-[calc(100vw-3rem)] bg-background border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
           {/* Header */}
           <div className="bg-primary text-primary-foreground p-4">
             <div className="flex items-center justify-between">
@@ -251,7 +251,7 @@ export const ChatWidget = () => {
           </div>
 
           {/* Content */}
-          <div className="p-4 max-h-[500px] overflow-y-auto">
+          <div className="p-4 max-h-[450px] overflow-y-auto">
             {step === "form" ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="mb-4">
