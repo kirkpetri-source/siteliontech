@@ -36,14 +36,48 @@ const Contato = () => {
     }
 
     setIsSubmitting(true);
-    
-    // Simular envio
-    setTimeout(() => {
+
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+
+      // Send notification to business WhatsApp
+      const businessNotification = await supabase.functions.invoke('send-whatsapp', {
+        body: {
+          phoneNumber: '5564999555364',
+          message: formData.message,
+          messageType: 'contact',
+          additionalData: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+          },
+        },
+      });
+
+      if (businessNotification.error) {
+        console.error('Error sending business notification:', businessNotification.error);
+      }
+
+      // Send welcome message to customer
+      if (formData.phone) {
+        const customerWelcome = await supabase.functions.invoke('send-whatsapp', {
+          body: {
+            phoneNumber: formData.phone,
+            message: '',
+            messageType: 'welcome',
+          },
+        });
+
+        if (customerWelcome.error) {
+          console.error('Error sending customer welcome:', customerWelcome.error);
+        }
+      }
+
       toast({
         title: "Mensagem enviada!",
-        description: "Entraremos em contato em breve.",
+        description: "Obrigado pelo contato. Responderemos em breve via WhatsApp.",
       });
-      setIsSubmitting(false);
+      
       setFormData({
         name: "",
         email: "",
@@ -53,7 +87,16 @@ const Contato = () => {
         consent: false,
       });
       setUploadedFile(null);
-    }, 1500);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Erro ao enviar",
+        description: "Ocorreu um erro. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
