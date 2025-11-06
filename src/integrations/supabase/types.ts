@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      backups: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          file_size: number | null
+          id: string
+          status: string
+          tables_backed_up: string[] | null
+          type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_size?: number | null
+          id?: string
+          status?: string
+          tables_backed_up?: string[] | null
+          type?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_size?: number | null
+          id?: string
+          status?: string
+          tables_backed_up?: string[] | null
+          type?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           client_type: string | null
@@ -254,6 +290,60 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          new_stock: number
+          notes: string | null
+          order_id: string | null
+          previous_stock: number
+          product_id: string
+          quantity: number
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_stock: number
+          notes?: string | null
+          order_id?: string | null
+          previous_stock: number
+          product_id: string
+          quantity: number
+          type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          new_stock?: number
+          notes?: string | null
+          order_id?: string | null
+          previous_stock?: number
+          product_id?: string
+          quantity?: number
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -286,6 +376,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      record_stock_movement: {
+        Args: {
+          p_notes?: string
+          p_order_id?: string
+          p_product_id: string
+          p_quantity: number
+          p_type: string
+        }
+        Returns: string
       }
       validate_coupon: {
         Args: { coupon_code: string; order_total: number }
