@@ -11,6 +11,7 @@ import { ProductsManager } from "@/components/dashboard/ProductsManager";
 import { CouponsManager } from "@/components/dashboard/CouponsManager";
 import { SalesStats } from "@/components/dashboard/SalesStats";
 import { OrdersList } from "@/components/dashboard/OrdersList";
+import { InventoryManager } from "@/components/dashboard/InventoryManager";
 import { Shield, LogOut } from "lucide-react";
 
 const Dashboard = () => {
@@ -62,10 +63,11 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 max-w-4xl">
+            <TabsList className="grid w-full grid-cols-6 max-w-5xl">
               <TabsTrigger value="orders">Pedidos</TabsTrigger>
               <TabsTrigger value="contacts">Contatos</TabsTrigger>
               <TabsTrigger value="products">Produtos</TabsTrigger>
+              <TabsTrigger value="inventory">Inventário</TabsTrigger>
               <TabsTrigger value="coupons">Cupons</TabsTrigger>
               <TabsTrigger value="stats">Estatísticas</TabsTrigger>
             </TabsList>
@@ -80,6 +82,10 @@ const Dashboard = () => {
 
             <TabsContent value="products" className="space-y-4">
               <ProductsManager />
+            </TabsContent>
+
+            <TabsContent value="inventory" className="space-y-4">
+              <InventoryManager />
             </TabsContent>
 
             <TabsContent value="coupons" className="space-y-4">
