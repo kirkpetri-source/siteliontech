@@ -208,17 +208,17 @@ export const ChatWidget = () => {
       {/* Botão flutuante */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 h-16 w-16 shadow-2xl hover:scale-110 transition-transform duration-300 bg-transparent p-0 border-0 cursor-pointer flex items-center justify-center group"
+        className="fixed bottom-6 right-6 z-50 h-20 w-20 hover:scale-110 transition-transform duration-300 bg-transparent p-0 border-0 cursor-pointer flex items-center justify-center group"
         aria-label="Abrir chat"
       >
         {isOpen ? (
-          <X className="h-6 w-6 text-white" />
+          <X className="h-6 w-6 text-primary" />
         ) : (
           <>
             <img 
               src={chatLionIcon} 
               alt="Lion Tech Chat" 
-              className="h-12 w-12 object-contain group-hover:scale-105 transition-transform"
+              className="h-20 w-20 object-contain group-hover:scale-105 transition-transform"
             />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">
