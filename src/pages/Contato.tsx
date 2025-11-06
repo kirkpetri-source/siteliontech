@@ -39,6 +39,21 @@ const Contato = () => {
     setIsSubmitting(true);
 
     try {
+      // Save contact to database
+      const { error: dbError } = await supabase
+        .from('contacts')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.message,
+          client_type: formData.clientType,
+        });
+
+      if (dbError) {
+        console.error('Error saving contact:', dbError);
+      }
+
       // Send notification to business WhatsApp
       const businessNotification = await supabase.functions.invoke('send-whatsapp', {
         body: {
