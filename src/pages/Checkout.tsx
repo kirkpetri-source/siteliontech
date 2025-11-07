@@ -600,26 +600,76 @@ const Checkout = () => {
                   )}
                 </div>
 
-                {/* Final Total Summary */}
-                <div className="glass rounded-lg p-4 border border-primary/20">
-                  <div className="space-y-2">
-                    {paymentDiscount > 0 && (
-                      <p className="text-sm text-green-600">
-                        💰 Economia PIX: R$ {paymentDiscount.toFixed(2)}
-                      </p>
-                    )}
-                    {appliedCoupon && (
-                      <p className="text-sm text-primary">
-                        🎟️ Economia Cupom: R$ {couponDiscount.toFixed(2)}
-                      </p>
-                    )}
-                    <p className="text-lg font-bold">
-                      Total a pagar: <span className="text-primary text-2xl">R$ {finalTotal.toFixed(2)}</span>
-                    </p>
+                {/* Final Order Summary */}
+                <div className="glass rounded-xl p-6 border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    Resumo do Pedido
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    {/* Subtotal */}
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-muted-foreground">Subtotal dos produtos</span>
+                      <span className="font-semibold">R$ {total.toFixed(2)}</span>
+                    </div>
+
+                    {/* Payment Method */}
+                    <div className="flex justify-between items-center py-2 border-t border-border/50">
+                      <span className="text-muted-foreground">Forma de pagamento</span>
+                      <span className="font-semibold flex items-center gap-2">
+                        {formData.paymentMethod === 'pix' ? (
+                          <>
+                            <Smartphone className="h-4 w-4 text-green-600" />
+                            PIX
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="h-4 w-4 text-primary" />
+                            Cartão de Crédito
+                          </>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Discounts */}
                     {(paymentDiscount > 0 || appliedCoupon) && (
-                      <p className="text-xs text-muted-foreground">
-                        Você economizou R$ {(paymentDiscount + couponDiscount).toFixed(2)}!
-                      </p>
+                      <div className="space-y-2 py-2 border-t border-border/50">
+                        {paymentDiscount > 0 && (
+                          <div className="flex justify-between items-center text-green-600">
+                            <span className="text-sm flex items-center gap-1">
+                              💰 Desconto PIX (5%)
+                            </span>
+                            <span className="font-semibold">-R$ {paymentDiscount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {appliedCoupon && (
+                          <div className="flex justify-between items-center text-primary">
+                            <span className="text-sm flex items-center gap-1">
+                              <Tag className="h-3 w-3" />
+                              Cupom {appliedCoupon.code}
+                            </span>
+                            <span className="font-semibold">-R$ {couponDiscount.toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Total */}
+                    <div className="flex justify-between items-center pt-3 border-t-2 border-primary/30">
+                      <span className="text-lg font-bold">Total a pagar</span>
+                      <span className="text-2xl font-bold text-primary">
+                        R$ {finalTotal.toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Savings Badge */}
+                    {(paymentDiscount > 0 || appliedCoupon) && (
+                      <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
+                        <p className="text-sm font-semibold text-green-600">
+                          🎉 Você está economizando R$ {(paymentDiscount + couponDiscount).toFixed(2)}!
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
