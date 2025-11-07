@@ -68,9 +68,7 @@ ${body.pageUrl ? `Página: ${body.pageUrl}` : ""}`;
             },
             body: JSON.stringify({
               number: whatsappAtendente,
-              textMessage: {
-                text: messageToAdmin,
-              },
+              text: messageToAdmin,
             }),
           }
         );
@@ -122,9 +120,7 @@ ${body.pageUrl ? `Página: ${body.pageUrl}` : ""}`;
             },
             body: JSON.stringify({
               number: body.customerPhone,
-              textMessage: {
-                text: confirmationMessage,
-              },
+              text: confirmationMessage,
             }),
           }
         );
