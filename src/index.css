@@ -165,124 +165,107 @@ All colors MUST be HSL.
     animation: shimmer 2s infinite;
   }
   
-  /* Tech Title Effects */
-  .tech-title {
+  /* Tech Hover Effect */
+  .tech-hover-title {
     position: relative;
     display: inline-block;
-    text-shadow: 
-      0 0 10px hsl(var(--primary) / 0.5),
-      0 0 20px hsl(var(--primary) / 0.3),
-      0 0 40px hsl(var(--primary) / 0.2);
+    transition: all 0.3s ease;
   }
   
-  .tech-title::before {
+  .tech-hover-title::before,
+  .tech-hover-title::after {
     content: attr(data-text);
     position: absolute;
-    left: 0;
     top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-      45deg,
-      transparent 30%,
-      hsl(var(--primary) / 0.3) 50%,
-      transparent 70%
-    );
-    background-size: 200% 200%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: tech-shine 3s linear infinite;
-    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
   
-  @keyframes tech-shine {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+  .tech-hover-title:hover::before {
+    opacity: 0.8;
+    color: #00ffd0;
+    text-shadow: -2px 0 #00ffd0;
+    animation: glitch-hover-1 0.3s infinite;
   }
   
-  .tech-grid {
+  .tech-hover-title:hover::after {
+    opacity: 0.8;
+    color: #ff0059;
+    text-shadow: 2px 0 #ff0059;
+    animation: glitch-hover-2 0.3s infinite;
+    animation-delay: 0.1s;
+  }
+  
+  .tech-hover-title:hover {
+    text-shadow: 
+      0 0 10px hsl(var(--primary)),
+      0 0 20px hsl(var(--primary)),
+      0 0 40px hsl(var(--primary)),
+      0 0 80px hsl(var(--primary));
+    animation: neon-pulse 0.5s ease-in-out infinite alternate;
+  }
+  
+  @keyframes glitch-hover-1 {
+    0% { clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%); transform: translate(-2px, -1px); }
+    25% { clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%); transform: translate(2px, 1px); }
+    50% { clip-path: polygon(0 20%, 100% 20%, 100% 80%, 0 80%); transform: translate(-1px, 2px); }
+    75% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(1px, -2px); }
+    100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(0); }
+  }
+  
+  @keyframes glitch-hover-2 {
+    0% { clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%); transform: translate(1px, 2px); }
+    25% { clip-path: polygon(0 0, 100% 0, 100% 40%, 0 40%); transform: translate(-2px, -1px); }
+    50% { clip-path: polygon(0 75%, 100% 75%, 100% 100%, 0 100%); transform: translate(2px, -1px); }
+    75% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(-1px, 2px); }
+    100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(0); }
+  }
+  
+  @keyframes neon-pulse {
+    from {
+      text-shadow: 
+        0 0 10px hsl(var(--primary)),
+        0 0 20px hsl(var(--primary)),
+        0 0 40px hsl(var(--primary)),
+        0 0 80px hsl(var(--primary));
+    }
+    to {
+      text-shadow: 
+        0 0 5px hsl(var(--primary)),
+        0 0 10px hsl(var(--primary)),
+        0 0 20px hsl(var(--primary)),
+        0 0 40px hsl(var(--primary)),
+        0 0 80px hsl(var(--primary));
+    }
+  }
+  
+  /* Scan line effect on hover */
+  .scan-line-container {
     position: relative;
   }
   
-  .tech-grid::after {
+  .scan-line-container::after {
     content: '';
     position: absolute;
-    inset: 0;
-    background-image: 
-      linear-gradient(0deg, transparent 24%, hsl(var(--primary) / 0.05) 25%, hsl(var(--primary) / 0.05) 26%, transparent 27%, transparent 74%, hsl(var(--primary) / 0.05) 75%, hsl(var(--primary) / 0.05) 76%, transparent 77%, transparent),
-      linear-gradient(90deg, transparent 24%, hsl(var(--primary) / 0.05) 25%, hsl(var(--primary) / 0.05) 26%, transparent 27%, transparent 74%, hsl(var(--primary) / 0.05) 75%, hsl(var(--primary) / 0.05) 76%, transparent 77%, transparent);
-    background-size: 50px 50px;
-    pointer-events: none;
-    animation: tech-scan 8s linear infinite;
-  }
-  
-  @keyframes tech-scan {
-    0% { transform: translateY(0); opacity: 0.3; }
-    50% { opacity: 0.5; }
-    100% { transform: translateY(50px); opacity: 0.3; }
-  }
-  
-  .glitch {
-    position: relative;
-  }
-  
-  .glitch::before,
-  .glitch::after {
-    content: attr(data-text);
-    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    opacity: 0.8;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
   
-  .glitch::before {
-    animation: glitch-1 2.5s infinite;
-    color: hsl(var(--primary));
-    z-index: -1;
+  .scan-line-container:hover::after {
+    opacity: 1;
+    animation: scan-move 1.5s ease-in-out infinite;
   }
   
-  .glitch::after {
-    animation: glitch-2 2.5s infinite;
-    color: hsl(var(--accent));
-    z-index: -2;
-  }
-  
-  @keyframes glitch-1 {
-    0%, 100% { transform: translate(0); }
-    20% { transform: translate(-2px, 2px); }
-    40% { transform: translate(-2px, -2px); }
-    60% { transform: translate(2px, 2px); }
-    80% { transform: translate(2px, -2px); }
-  }
-  
-  @keyframes glitch-2 {
-    0%, 100% { transform: translate(0); }
-    20% { transform: translate(2px, -2px); }
-    40% { transform: translate(2px, 2px); }
-    60% { transform: translate(-2px, -2px); }
-    80% { transform: translate(-2px, 2px); }
-  }
-  
-  .cyber-text {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--foreground)),
-      hsl(var(--primary)),
-      hsl(var(--accent)),
-      hsl(var(--foreground))
-    );
-    background-size: 300% 100%;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: cyber-flow 4s ease-in-out infinite;
-  }
-  
-  @keyframes cyber-flow {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+  @keyframes scan-move {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100px); }
   }
 }
