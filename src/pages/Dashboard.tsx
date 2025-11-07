@@ -18,6 +18,7 @@ import { CasesManager } from "@/components/dashboard/CasesManager";
 import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { ChatTicketsManager } from "@/components/dashboard/ChatTicketsManager";
 import { BusinessHoursManager } from "@/components/dashboard/BusinessHoursManager";
+import { AutoResponsesManager } from "@/components/dashboard/AutoResponsesManager";
 import {
   Shield, 
   LogOut, 
@@ -177,7 +178,7 @@ const Dashboard = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
-                  variant={["contacts", "chat", "business-hours"].includes(activeSection) ? "default" : "ghost"}
+                  variant={["contacts", "chat", "business-hours", "auto-responses"].includes(activeSection) ? "default" : "ghost"}
                   className="gap-2"
                 >
                   <MessageSquare className="h-4 w-4" />
@@ -193,6 +194,10 @@ const Dashboard = () => {
                 <DropdownMenuItem onClick={() => setActiveSection("business-hours")} className="cursor-pointer">
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Horário de Funcionamento
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveSection("auto-responses")} className="cursor-pointer">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Respostas Automáticas
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setActiveSection("contacts")} className="cursor-pointer">
                   <MessageSquare className="h-4 w-4 mr-2" />
@@ -224,6 +229,7 @@ const Dashboard = () => {
             {activeSection === "coupons" && <CouponsManager />}
             {activeSection === "chat" && <ChatTicketsManager />}
             {activeSection === "business-hours" && <BusinessHoursManager />}
+            {activeSection === "auto-responses" && <AutoResponsesManager />}
             {activeSection === "contacts" && <ContactsList />}
             {activeSection === "backups" && <BackupsManager />}
           </div>

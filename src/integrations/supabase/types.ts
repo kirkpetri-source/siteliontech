@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      auto_responses: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          message: string
+          response_type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          message: string
+          response_type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          message?: string
+          response_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       backups: {
         Row: {
           completed_at: string | null

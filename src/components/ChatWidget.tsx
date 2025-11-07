@@ -27,6 +27,38 @@ export const ChatWidget = () => {
   });
   const [attachment, setAttachment] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [autoResponses, setAutoResponses] = useState({
+    offline_welcome: "Olá! 👋 No momento estamos fora do horário de atendimento, mas fique tranquilo! Registramos sua mensagem e responderemos assim que possível pelo WhatsApp.",
+    offline_confirmation: "Recebemos sua mensagem! Nossa equipe responderá em breve durante nosso horário de atendimento.",
+    online_welcome: "Olá! 👋 Sou o atendimento da Lion Tech. Como posso ajudar hoje?",
+  });
+
+  // Load auto responses
+  useEffect(() => {
+    const loadAutoResponses = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("auto_responses")
+          .select("*")
+          .eq("active", true)
+          .in("response_type", ["offline_welcome", "offline_confirmation", "online_welcome"]);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const responsesMap: any = {};
+          data.forEach((item) => {
+            responsesMap[item.response_type] = item.message;
+          });
+          setAutoResponses((prev) => ({ ...prev, ...responsesMap }));
+        }
+      } catch (error) {
+        console.error("Error loading auto responses:", error);
+      }
+    };
+
+    loadAutoResponses();
+  }, []);
 
   // Check business hours
   useEffect(() => {
@@ -183,7 +215,10 @@ export const ChatWidget = () => {
       }
 
       if (sendResult?.success) {
-        toast.success("Recebemos sua mensagem! Já te respondemos pelo WhatsApp.");
+        const confirmationMsg = isOnline 
+          ? "Recebemos sua mensagem! Já te respondemos pelo WhatsApp."
+          : autoResponses.offline_confirmation;
+        toast.success(confirmationMsg);
         setStep("chat");
         
         // Salvar no localStorage
@@ -202,9 +237,9 @@ export const ChatWidget = () => {
 
   const getWelcomeMessage = () => {
     if (isOnline) {
-      return "Olá! 👋 Sou o atendimento da Lion Tech. Como posso ajudar hoje?";
+      return autoResponses.online_welcome;
     }
-    return "Estamos fora do horário agora, mas registramos sua mensagem e responderemos assim que possível.";
+    return autoResponses.offline_welcome;
   };
 
   return (
