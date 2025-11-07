@@ -46,15 +46,13 @@ export const Hero = () => {
             style={{ animationDelay: '0.2s', animationFillMode: 'both' }}
           >
             Tecnologia que não te deixa{" "}
-            <span className="text-gradient tech-title-interactive inline-block">
+            <span className="inline-block">
               {["n", "a", " ", "m", "ã", "o"].map((letter, index) => (
                 <span 
                   key={index} 
-                  className="letter-effect" 
-                  data-letter={letter}
-                  style={{ animationDelay: `${index * 0.05}s` }}
+                  className="letter-hover text-gradient"
                 >
-                  {letter}
+                  {letter === " " ? "\u00A0" : letter}
                 </span>
               ))}
             </span>
