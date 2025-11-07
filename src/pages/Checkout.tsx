@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditCard, Smartphone, ArrowLeft, CheckCircle, Tag, Loader2 } from "lucide-react";
 import { z } from "zod";
+import { CardPayment } from "@/components/payment/CardPayment";
+import { PixPayment } from "@/components/payment/PixPayment";
 
 const checkoutSchema = z.object({
   name: z.string().trim().min(3, "Nome deve ter no mínimo 3 caracteres").max(100, "Nome muito longo"),
@@ -28,6 +30,10 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [pixData, setPixData] = useState<any>(null);
+  const [isGeneratingPix, setIsGeneratingPix] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -141,6 +147,118 @@ const Checkout = () => {
     );
   }
 
+  const handleGeneratePix = async () => {
+    if (!currentOrderId) return;
+    
+    setIsGeneratingPix(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('mercadopago-create-payment', {
+        body: {
+          orderId: currentOrderId,
+          paymentMethod: 'pix',
+          paymentData: {
+            transaction_amount: finalTotal,
+            description: `Pedido Lion Tech #${currentOrderId.substring(0, 8).toUpperCase()}`,
+            payer: {
+              email: formData.email,
+              first_name: formData.name.split(' ')[0],
+            },
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      // Update order with PIX data
+      await supabase
+        .from('orders')
+        .update({
+          payment_id: data.id,
+          qr_code: data.qr_code,
+          qr_code_base64: data.qr_code_base64,
+          payment_status: data.status,
+        })
+        .eq('id', currentOrderId);
+
+      setPixData(data);
+      
+      toast({
+        title: "QR Code gerado!",
+        description: "Escaneie o QR Code para realizar o pagamento.",
+      });
+    } catch (error) {
+      console.error('Error generating PIX:', error);
+      toast({
+        title: "Erro ao gerar PIX",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPix(false);
+    }
+  };
+
+  const handleCardPayment = async (paymentData: any) => {
+    if (!currentOrderId) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('mercadopago-create-payment', {
+        body: {
+          orderId: currentOrderId,
+          paymentMethod: paymentData.payment_method_id,
+          paymentData: {
+            transaction_amount: finalTotal,
+            description: `Pedido Lion Tech #${currentOrderId.substring(0, 8).toUpperCase()}`,
+            token: paymentData.token,
+            installments: paymentData.installments,
+            issuer_id: paymentData.issuer_id,
+            payer: {
+              email: formData.email,
+              first_name: formData.name.split(' ')[0],
+              identification: {
+                type: paymentData.payer.identification.type,
+                number: paymentData.payer.identification.number,
+              },
+            },
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      // Update order with payment data
+      await supabase
+        .from('orders')
+        .update({
+          payment_id: data.id,
+          payment_status: data.status,
+          status: data.status === 'approved' ? 'processing' : 'pending',
+        })
+        .eq('id', currentOrderId);
+
+      if (data.status === 'approved') {
+        toast({
+          title: "Pagamento aprovado!",
+          description: "Seu pedido está sendo processado.",
+        });
+        clearCart();
+        navigate('/');
+      } else {
+        toast({
+          title: "Pagamento pendente",
+          description: "Aguardando confirmação do pagamento.",
+        });
+      }
+    } catch (error) {
+      console.error('Error processing card payment:', error);
+      toast({
+        title: "Erro no pagamento",
+        description: "Tente novamente ou escolha outra forma de pagamento.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -175,6 +293,8 @@ const Checkout = () => {
         .single();
 
       if (orderError) throw orderError;
+
+      setCurrentOrderId(order.id);
 
       // Create order items
       const orderItems = items.map(item => ({
@@ -255,13 +375,13 @@ const Checkout = () => {
         });
       }
 
+      // Show payment form instead of redirecting
+      setShowPaymentForm(true);
+      
       toast({
-        title: "Pedido realizado com sucesso!",
-        description: "Você receberá uma confirmação via WhatsApp em breve.",
+        title: "Pedido criado!",
+        description: "Agora finalize o pagamento para confirmar.",
       });
-
-      clearCart();
-      navigate('/');
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
@@ -504,20 +624,44 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                <Button
-                  type="submit"
-                  variant="hero"
-                  size="lg"
-                  className="w-full"
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? "Processando..." : "Finalizar Pedido"}
-                  <CheckCircle className="ml-2 h-5 w-5" />
-                </Button>
+                {!showPaymentForm ? (
+                  <>
+                    <Button
+                      type="submit"
+                      variant="hero"
+                      size="lg"
+                      className="w-full"
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? "Processando..." : "Continuar para Pagamento"}
+                      <CheckCircle className="ml-2 h-5 w-5" />
+                    </Button>
 
-                <p className="text-xs text-center text-muted-foreground">
-                  Ao finalizar, você receberá uma confirmação via WhatsApp
-                </p>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Ao continuar, você será direcionado para o pagamento
+                    </p>
+                  </>
+                ) : (
+                  <div className="space-y-6 border-t pt-6">
+                    <h3 className="text-xl font-bold">Finalizar Pagamento</h3>
+                    
+                    {formData.paymentMethod === 'pix' ? (
+                      <PixPayment
+                        qrCode={pixData?.qr_code}
+                        qrCodeBase64={pixData?.qr_code_base64}
+                        onGenerate={handleGeneratePix}
+                        isGenerating={isGeneratingPix}
+                      />
+                    ) : (
+                      <CardPayment
+                        amount={finalTotal}
+                        onSubmit={handleCardPayment}
+                        customerEmail={formData.email}
+                        customerName={formData.name}
+                      />
+                    )}
+                  </div>
+                )}
               </form>
             </div>
           </div>

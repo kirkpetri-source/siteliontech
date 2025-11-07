@@ -457,9 +457,15 @@ export type Database = {
           customer_phone: string
           discount: number
           id: string
+          payment_id: string | null
           payment_method: string
+          payment_status: string | null
+          payment_type: string | null
+          qr_code: string | null
+          qr_code_base64: string | null
           status: string
           subtotal: number
+          ticket_url: string | null
           total: number
           updated_at: string
         }
@@ -472,9 +478,15 @@ export type Database = {
           customer_phone: string
           discount?: number
           id?: string
+          payment_id?: string | null
           payment_method: string
+          payment_status?: string | null
+          payment_type?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
           status?: string
           subtotal: number
+          ticket_url?: string | null
           total: number
           updated_at?: string
         }
@@ -487,9 +499,15 @@ export type Database = {
           customer_phone?: string
           discount?: number
           id?: string
+          payment_id?: string | null
           payment_method?: string
+          payment_status?: string | null
+          payment_type?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
           status?: string
           subtotal?: number
+          ticket_url?: string | null
           total?: number
           updated_at?: string
         }
