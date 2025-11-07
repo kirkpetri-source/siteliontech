@@ -165,107 +165,95 @@ All colors MUST be HSL.
     animation: shimmer 2s infinite;
   }
   
-  /* Tech Hover Effect */
-  .tech-hover-title {
-    position: relative;
+  /* Interactive Letter Effects */
+  .letter-effect {
     display: inline-block;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    cursor: pointer;
+  }
+  
+  .letter-effect:hover {
+    color: hsl(var(--primary));
+    transform: translateY(-10px) scale(1.2) rotateZ(5deg);
+    text-shadow: 
+      0 0 20px hsl(var(--primary)),
+      0 0 40px hsl(var(--primary)),
+      0 5px 15px rgba(0,0,0,0.3);
+    filter: brightness(1.5);
+    animation: letter-glitch 0.3s ease-in-out;
+  }
+  
+  @keyframes letter-glitch {
+    0%, 100% { transform: translateY(-10px) scale(1.2) rotateZ(5deg); }
+    25% { transform: translateY(-10px) scale(1.2) rotateZ(-3deg); }
+    50% { transform: translateY(-12px) scale(1.25) rotateZ(5deg); }
+    75% { transform: translateY(-10px) scale(1.2) rotateZ(-3deg); }
+  }
+  
+  /* Pixel dissolve effect */
+  .letter-effect::before {
+    content: attr(data-letter);
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: hsl(var(--accent));
+    opacity: 0;
+    transform: scale(0.5);
     transition: all 0.3s ease;
   }
   
-  .tech-hover-title::before,
-  .tech-hover-title::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  .letter-effect:hover::before {
+    opacity: 0.5;
+    transform: scale(1.5) translateY(-20px);
+    filter: blur(4px);
   }
   
-  .tech-hover-title:hover::before {
-    opacity: 0.8;
-    color: #00ffd0;
-    text-shadow: -2px 0 #00ffd0;
-    animation: glitch-hover-1 0.3s infinite;
-  }
-  
-  .tech-hover-title:hover::after {
-    opacity: 0.8;
-    color: #ff0059;
-    text-shadow: 2px 0 #ff0059;
-    animation: glitch-hover-2 0.3s infinite;
-    animation-delay: 0.1s;
-  }
-  
-  .tech-hover-title:hover {
-    text-shadow: 
-      0 0 10px hsl(var(--primary)),
-      0 0 20px hsl(var(--primary)),
-      0 0 40px hsl(var(--primary)),
-      0 0 80px hsl(var(--primary));
-    animation: neon-pulse 0.5s ease-in-out infinite alternate;
-  }
-  
-  @keyframes glitch-hover-1 {
-    0% { clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%); transform: translate(-2px, -1px); }
-    25% { clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%); transform: translate(2px, 1px); }
-    50% { clip-path: polygon(0 20%, 100% 20%, 100% 80%, 0 80%); transform: translate(-1px, 2px); }
-    75% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(1px, -2px); }
-    100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(0); }
-  }
-  
-  @keyframes glitch-hover-2 {
-    0% { clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%); transform: translate(1px, 2px); }
-    25% { clip-path: polygon(0 0, 100% 0, 100% 40%, 0 40%); transform: translate(-2px, -1px); }
-    50% { clip-path: polygon(0 75%, 100% 75%, 100% 100%, 0 100%); transform: translate(2px, -1px); }
-    75% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(-1px, 2px); }
-    100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: translate(0); }
-  }
-  
-  @keyframes neon-pulse {
-    from {
-      text-shadow: 
-        0 0 10px hsl(var(--primary)),
-        0 0 20px hsl(var(--primary)),
-        0 0 40px hsl(var(--primary)),
-        0 0 80px hsl(var(--primary));
-    }
-    to {
-      text-shadow: 
-        0 0 5px hsl(var(--primary)),
-        0 0 10px hsl(var(--primary)),
-        0 0 20px hsl(var(--primary)),
-        0 0 40px hsl(var(--primary)),
-        0 0 80px hsl(var(--primary));
-    }
-  }
-  
-  /* Scan line effect on hover */
-  .scan-line-container {
-    position: relative;
-  }
-  
-  .scan-line-container::after {
+  /* Digital fragment effect */
+  .letter-effect::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent);
+    inset: -5px;
+    background: 
+      linear-gradient(90deg, transparent 48%, hsl(var(--primary)) 49%, hsl(var(--primary)) 51%, transparent 52%),
+      linear-gradient(0deg, transparent 48%, hsl(var(--accent)) 49%, hsl(var(--accent)) 51%, transparent 52%);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
   }
   
-  .scan-line-container:hover::after {
-    opacity: 1;
-    animation: scan-move 1.5s ease-in-out infinite;
+  .letter-effect:hover::after {
+    opacity: 0.6;
+    animation: fragment-pulse 0.4s ease-in-out;
   }
   
-  @keyframes scan-move {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(100px); }
+  @keyframes fragment-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.5); opacity: 0.3; }
+  }
+  
+  /* Circuit trace effect */
+  .tech-title-interactive {
+    position: relative;
+    padding: 10px 0;
+  }
+  
+  .tech-title-interactive::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+      hsl(var(--primary)), 
+      hsl(var(--accent)), 
+      hsl(var(--primary))
+    );
+    box-shadow: 0 0 10px hsl(var(--primary));
+    transition: width 0.5s ease;
+  }
+  
+  .tech-title-interactive:hover::before {
+    width: 100%;
   }
 }

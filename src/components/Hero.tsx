@@ -42,12 +42,21 @@ export const Hero = () => {
           </div>
           
           <h1 
-            className="text-5xl md:text-7xl font-bold leading-tight animate-fade-in scan-line-container"
+            className="text-5xl md:text-7xl font-bold leading-tight animate-fade-in"
             style={{ animationDelay: '0.2s', animationFillMode: 'both' }}
           >
             Tecnologia que não te deixa{" "}
-            <span className="text-gradient tech-hover-title inline-block cursor-pointer" data-text="na mão">
-              na mão
+            <span className="text-gradient tech-title-interactive inline-block">
+              {["n", "a", " ", "m", "ã", "o"].map((letter, index) => (
+                <span 
+                  key={index} 
+                  className="letter-effect" 
+                  data-letter={letter}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  {letter}
+                </span>
+              ))}
             </span>
           </h1>
           
