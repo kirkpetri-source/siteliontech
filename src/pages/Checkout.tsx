@@ -18,7 +18,12 @@ const checkoutSchema = z.object({
   name: z.string().trim().min(3, "Nome deve ter no mínimo 3 caracteres").max(100, "Nome muito longo"),
   email: z.string().trim().email("Email inválido").max(255, "Email muito longo"),
   phone: z.string().trim().min(10, "Telefone inválido").max(20, "Telefone inválido"),
-  address: z.string().trim().min(10, "Endereço muito curto").max(500, "Endereço muito longo"),
+  zipCode: z.string().trim().length(8, "CEP deve ter 8 dígitos"),
+  street: z.string().trim().min(3, "Rua é obrigatória").max(200, "Rua muito longa"),
+  number: z.string().trim().min(1, "Número é obrigatório").max(10, "Número muito longo"),
+  neighborhood: z.string().trim().min(2, "Bairro é obrigatório").max(100, "Bairro muito longo"),
+  city: z.string().trim().min(2, "Cidade é obrigatória").max(100, "Cidade muito longa"),
+  state: z.string().trim().length(2, "UF deve ter 2 caracteres"),
   paymentMethod: z.enum(["pix", "card"]),
 });
 
@@ -39,9 +44,18 @@ const Checkout = () => {
     name: "",
     email: "",
     phone: "",
+    zipCode: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
     address: "",
     paymentMethod: "pix",
   });
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [cepError, setCepError] = useState("");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -49,6 +63,53 @@ const Checkout = () => {
   const paymentDiscount = formData.paymentMethod === 'pix' ? total * 0.05 : 0;
   const couponDiscount = appliedCoupon?.discount_amount || 0;
   const finalTotal = total - paymentDiscount - couponDiscount;
+
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cep = e.target.value.replace(/\D/g, "");
+    setFormData(prev => ({ ...prev, zipCode: cep }));
+    setCepError("");
+
+    if (cep.length === 8) {
+      setIsLoadingCep(true);
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+
+        if (data.erro) {
+          setCepError("CEP não encontrado");
+          toast({
+            title: "CEP não encontrado",
+            description: "Verifique o CEP digitado.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          street: data.logradouro || "",
+          neighborhood: data.bairro || "",
+          city: data.localidade || "",
+          state: data.uf || "",
+          address: `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`,
+        }));
+
+        toast({
+          title: "Endereço encontrado!",
+          description: "Preencha o número e complemento.",
+        });
+      } catch (error) {
+        setCepError("Erro ao buscar CEP");
+        toast({
+          title: "Erro ao buscar CEP",
+          description: "Tente novamente.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingCep(false);
+      }
+    }
+  };
 
   const validateForm = () => {
     try {
@@ -274,6 +335,9 @@ const Checkout = () => {
     setIsProcessing(true);
 
     try {
+      // Build full address
+      const fullAddress = `${formData.street}, ${formData.number}${formData.complement ? ` - ${formData.complement}` : ''}, ${formData.neighborhood}, ${formData.city} - ${formData.state}, CEP: ${formData.zipCode}`;
+
       // Create order in database
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -281,7 +345,7 @@ const Checkout = () => {
           customer_name: formData.name,
           customer_email: formData.email,
           customer_phone: formData.phone,
-          customer_address: formData.address,
+          customer_address: fullAddress,
           payment_method: formData.paymentMethod,
           subtotal: total,
           discount: paymentDiscount + couponDiscount,
@@ -506,16 +570,109 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="address">Endereço Completo *</Label>
-                  <Input
-                    id="address"
-                    required
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Rua, número, bairro, cidade"
-                  />
-                  {errors.address && <p className="text-sm text-destructive">{errors.address}</p>}
+                {/* CEP and Address Fields */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="zipCode">CEP *</Label>
+                    <div className="relative">
+                      <Input
+                        id="zipCode"
+                        value={formData.zipCode}
+                        onChange={handleCepChange}
+                        placeholder="00000-000"
+                        maxLength={8}
+                        required
+                        className={cepError ? "border-destructive" : ""}
+                      />
+                      {isLoadingCep && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                      )}
+                    </div>
+                    {cepError && (
+                      <p className="text-xs text-destructive">{cepError}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Digite apenas números
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="street">Rua *</Label>
+                      <Input
+                        id="street"
+                        value={formData.street}
+                        onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                        placeholder="Nome da rua"
+                        required
+                        disabled={isLoadingCep}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="number">Número *</Label>
+                      <Input
+                        id="number"
+                        value={formData.number}
+                        onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                        placeholder="123"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="complement">Complemento</Label>
+                      <Input
+                        id="complement"
+                        value={formData.complement}
+                        onChange={(e) => setFormData({ ...formData, complement: e.target.value })}
+                        placeholder="Apto, Bloco, etc"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="neighborhood">Bairro *</Label>
+                      <Input
+                        id="neighborhood"
+                        value={formData.neighborhood}
+                        onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                        placeholder="Nome do bairro"
+                        required
+                        disabled={isLoadingCep}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="city">Cidade *</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        placeholder="Nome da cidade"
+                        required
+                        disabled={isLoadingCep}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="state">UF *</Label>
+                      <Input
+                        id="state"
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
+                        placeholder="GO"
+                        maxLength={2}
+                        required
+                        disabled={isLoadingCep}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
