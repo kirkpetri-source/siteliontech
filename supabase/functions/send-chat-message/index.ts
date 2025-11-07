@@ -50,6 +50,8 @@ Setor: ${body.subject}
 Mensagem: ${body.message}
 ${body.pageUrl ? `Página: ${body.pageUrl}` : ""}`;
 
+    console.log("Message to admin:", messageToAdmin);
+
     let adminMessageSuccess = false;
     let customerMessageSuccess = false;
     let errorMessage = "";
