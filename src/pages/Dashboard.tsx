@@ -17,7 +17,8 @@ import { ServicesManager } from "@/components/dashboard/ServicesManager";
 import { CasesManager } from "@/components/dashboard/CasesManager";
 import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { ChatTicketsManager } from "@/components/dashboard/ChatTicketsManager";
-import { 
+import { BusinessHoursManager } from "@/components/dashboard/BusinessHoursManager";
+import {
   Shield, 
   LogOut, 
   ShoppingCart, 
@@ -176,7 +177,7 @@ const Dashboard = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
-                  variant={["contacts", "chat"].includes(activeSection) ? "default" : "ghost"}
+                  variant={["contacts", "chat", "business-hours"].includes(activeSection) ? "default" : "ghost"}
                   className="gap-2"
                 >
                   <MessageSquare className="h-4 w-4" />
@@ -188,6 +189,10 @@ const Dashboard = () => {
                 <DropdownMenuItem onClick={() => setActiveSection("chat")} className="cursor-pointer">
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Chat / Tickets
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveSection("business-hours")} className="cursor-pointer">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Horário de Funcionamento
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setActiveSection("contacts")} className="cursor-pointer">
                   <MessageSquare className="h-4 w-4 mr-2" />
@@ -218,6 +223,7 @@ const Dashboard = () => {
             {activeSection === "cases" && <CasesManager />}
             {activeSection === "coupons" && <CouponsManager />}
             {activeSection === "chat" && <ChatTicketsManager />}
+            {activeSection === "business-hours" && <BusinessHoursManager />}
             {activeSection === "contacts" && <ContactsList />}
             {activeSection === "backups" && <BackupsManager />}
           </div>

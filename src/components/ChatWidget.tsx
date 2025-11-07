@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { MessageCircle, X, Send, Paperclip } from "lucide-react";
 import { Button } from "./ui/button";
 import chatLionIcon from "@/assets/chat-lion-icon.png";
+import chatLionSleeping from "@/assets/chat-lion-sleeping.png";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
@@ -31,22 +32,24 @@ export const ChatWidget = () => {
   useEffect(() => {
     const checkBusinessHours = async () => {
       try {
-        const { data } = await supabase
-          .from("chat_settings")
-          .select("setting_value")
-          .eq("setting_key", "business_hours")
-          .single();
+        const { data, error } = await supabase
+          .from("business_hours")
+          .select("*")
+          .order("day_of_week");
 
-        if (data) {
-          const hours = data.setting_value;
+        if (error) throw error;
+
+        if (data && data.length > 0) {
           const now = new Date();
-          const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-          const day = dayNames[now.getDay()];
-          const currentTime = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
+          const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+          const currentTime = now.toTimeString().slice(0, 5); // "HH:MM" format
 
-          const dayHours = hours[day];
-          if (dayHours?.enabled) {
-            const isWithinHours = currentTime >= dayHours.start && currentTime <= dayHours.end;
+          const todayHours = data.find((h) => h.day_of_week === currentDay);
+
+          if (todayHours?.is_enabled) {
+            const isWithinHours =
+              currentTime >= todayHours.start_time &&
+              currentTime <= todayHours.end_time;
             setIsOnline(isWithinHours);
           } else {
             setIsOnline(false);
@@ -54,6 +57,7 @@ export const ChatWidget = () => {
         }
       } catch (error) {
         console.error("Error checking business hours:", error);
+        setIsOnline(false);
       }
     };
 
@@ -216,7 +220,7 @@ export const ChatWidget = () => {
         ) : (
           <>
             <img 
-              src={chatLionIcon} 
+              src={isOnline ? chatLionIcon : chatLionSleeping} 
               alt="Lion Tech Chat" 
               className="h-20 w-20 object-contain group-hover:scale-105 transition-transform"
             />
