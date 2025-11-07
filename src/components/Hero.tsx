@@ -42,10 +42,13 @@ export const Hero = () => {
           </div>
           
           <h1 
-            className="text-5xl md:text-7xl font-bold leading-tight animate-fade-in"
+            className="text-5xl md:text-7xl font-bold leading-tight animate-fade-in tech-grid"
             style={{ animationDelay: '0.2s', animationFillMode: 'both' }}
           >
-            Tecnologia que não te deixa <span className="text-gradient">na mão</span>
+            <span className="cyber-text">Tecnologia que não te deixa </span>
+            <span className="text-gradient tech-title inline-block" data-text="na mão">
+              na mão
+            </span>
           </h1>
           
           <p 
