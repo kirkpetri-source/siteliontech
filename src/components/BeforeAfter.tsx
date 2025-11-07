@@ -107,9 +107,9 @@ export const BeforeAfter = ({ beforeImage, afterImage, title, description, categ
       </Card>
 
       {/* Modal for expanded view */}
-      <DialogContent className="max-w-6xl w-full p-0 overflow-hidden">
+      <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
         <div
-          className="relative h-[80vh] overflow-hidden cursor-ew-resize select-none touch-none"
+          className="relative h-[60vh] overflow-hidden cursor-ew-resize select-none touch-none"
           onMouseDown={() => setIsDragging(true)}
           onMouseUp={() => setIsDragging(false)}
           onMouseLeave={() => setIsDragging(false)}
