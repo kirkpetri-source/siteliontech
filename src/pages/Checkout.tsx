@@ -232,17 +232,8 @@ const Checkout = () => {
 
       if (error) throw error;
 
-      // Update order with PIX data
-      await supabase
-        .from('orders')
-        .update({
-          payment_id: data.id,
-          qr_code: data.qr_code,
-          qr_code_base64: data.qr_code_base64,
-          payment_status: data.status,
-          ticket_url: (data && (data.ticket_url || data.ticketUrl)) ?? null,
-        })
-        .eq('id', currentOrderId);
+      // Evita UPDATE direto na tabela orders (RLS restringe updates a admins).
+      // Mantém dados do PIX em estado local e deixa o webhook atualizar a ordem.
 
       setPixData(data);
       setPaymentStatus(data.status);
@@ -298,15 +289,9 @@ const Checkout = () => {
 
       if (error) throw error;
 
-      // Update order with payment data
-      await supabase
-        .from('orders')
-        .update({
-          payment_id: data.id,
-          payment_status: data.status,
-          status: data.status === 'approved' ? 'processing' : 'pending',
-        })
-        .eq('id', currentOrderId);
+      // Evita UPDATE direto na tabela orders (RLS restringe updates a admins).
+      // Usa estado local para refletir status e deixa webhook atualizar a ordem.
+      setPaymentStatus(data.status);
 
       if (data.status === 'approved') {
         toast({
@@ -377,10 +362,14 @@ const Checkout = () => {
       // Build full address
       const fullAddress = `${formData.street}, ${formData.number}${formData.complement ? ` - ${formData.complement}` : ''}, ${formData.neighborhood}, ${formData.city} - ${formData.state}, CEP: ${formData.zipCode}`;
 
-      // Create order in database
-      const { data: order, error: orderError } = await supabase
+      // Gera ID de pedido no cliente para evitar SELECT (RLS restringe SELECT a admins)
+      const newOrderId = crypto.randomUUID();
+
+      // Create order in database (sem .select())
+      const { error: orderError } = await supabase
         .from('orders')
         .insert({
+          id: newOrderId,
           customer_name: formData.name,
           customer_email: formData.email,
           customer_phone: formData.phone,
@@ -391,17 +380,15 @@ const Checkout = () => {
           coupon_code: appliedCoupon?.code || null,
           total: finalTotal,
           status: 'pending',
-        })
-        .select()
-        .single();
+        });
 
       if (orderError) throw orderError;
 
-      setCurrentOrderId(order.id);
+      setCurrentOrderId(newOrderId);
 
       // Create order items
       const orderItems = items.map(item => ({
-        order_id: order.id,
+        order_id: newOrderId,
         product_id: item.id,
         product_name: item.name,
         product_price: item.price,
