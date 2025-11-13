@@ -1,13 +1,22 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+/// <reference lib="dom" />
+/// <reference lib="deno.ns" />
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+// Tipos mínimos para o editor reconhecer o ambiente Deno
+declare const Deno: {
+  env: { get(name: string): string | undefined };
+  serve: (handler: (req: Request) => Response | Promise<Response>) => void;
+};
+
+const baseCorsHeaders: Record<string, string> = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with',
   'Access-Control-Max-Age': '86400',
+  'Vary': 'Origin',
 };
 
-serve(async (req) => {
+Deno.serve(async (req: Request): Promise<Response> => {
+  const origin = req.headers.get('origin') ?? '*';
+  const corsHeaders = { ...baseCorsHeaders, 'Access-Control-Allow-Origin': origin };
   if (req.method === 'OPTIONS') {
     // Preflight precisa responder com status 200 e cabeçalhos completos
     return new Response('ok', { headers: corsHeaders, status: 200 });
