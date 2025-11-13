@@ -1,5 +1,4 @@
 /// <reference lib="dom" />
-/// <reference lib="deno.ns" />
 
 // Tipos mínimos para o editor reconhecer o ambiente Deno
 declare const Deno: {
@@ -16,7 +15,12 @@ const baseCorsHeaders: Record<string, string> = {
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const origin = req.headers.get('origin') ?? '*';
-  const corsHeaders = { ...baseCorsHeaders, 'Access-Control-Allow-Origin': origin };
+  const reqAllowHeaders = req.headers.get('access-control-request-headers');
+  const corsHeaders = {
+    ...baseCorsHeaders,
+    'Access-Control-Allow-Origin': origin,
+    ...(reqAllowHeaders ? { 'Access-Control-Allow-Headers': reqAllowHeaders } : {}),
+  };
   if (req.method === 'OPTIONS') {
     // Preflight precisa responder com status 200 e cabeçalhos completos
     return new Response('ok', { headers: corsHeaders, status: 200 });
