@@ -277,7 +277,7 @@ export function OrdersList() {
       </Card>
 
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="order-dialog-desc">
           <DialogHeader>
             <DialogTitle>
               Pedido #{selectedOrder?.id.substring(0, 8).toUpperCase()}
@@ -286,6 +286,7 @@ export function OrdersList() {
               Detalhes completos do pedido
             </DialogDescription>
           </DialogHeader>
+          <p id="order-dialog-desc" className="sr-only">Detalhes completos do pedido selecionado.</p>
 
           {selectedOrder && (
             <div className="space-y-6">

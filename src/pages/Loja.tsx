@@ -3,6 +3,7 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductFilters } from "@/components/ProductFilters";
+import { ShopPromoBanner } from "@/components/ShopPromoBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { Package } from "lucide-react";
 
@@ -23,6 +24,7 @@ interface Product {
   category_id: string | null;
   brand: string;
   image_url: string | null;
+  image_urls?: string[] | null;
   stock: number;
   featured: boolean;
 }
@@ -61,14 +63,15 @@ const Loja = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
+      // Consulta principal sem image_urls para evitar 400 visível caso o schema não tenha propagado
+      const base = await supabase
         .from('products')
-        .select('*, categories(id, name, slug)')
+        .select('*')
         .order('featured', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProducts((data as any) || []);
+      if (base.error) throw base.error;
+      setProducts((base.data as any) || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -113,6 +116,13 @@ const Loja = () => {
               Componentes, periféricos e acessórios de alta qualidade para seu computador
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Promo Banner */}
+      <section className="pb-8">
+        <div className="container mx-auto px-4">
+          <ShopPromoBanner />
         </div>
       </section>
 

@@ -32,6 +32,7 @@ export const ChatWidget = () => {
     offline_confirmation: "Recebemos sua mensagem! Nossa equipe responderá em breve durante nosso horário de atendimento.",
     online_welcome: "Olá! 👋 Sou o atendimento da Lion Tech. Como posso ajudar hoje?",
   });
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
   // Load auto responses
   useEffect(() => {
@@ -96,6 +97,32 @@ export const ChatWidget = () => {
     checkBusinessHours();
     const interval = setInterval(checkBusinessHours, 60000); // Check every minute
     return () => clearInterval(interval);
+  }, []);
+
+  // Subscrição em tempo real para mensagens do ticket corrente (incrementa badge)
+  useEffect(() => {
+    const storedTicketId = localStorage.getItem("chat_ticket_id");
+    if (!storedTicketId) return;
+    setActiveTicketId(storedTicketId);
+
+    const channel = supabase
+      .channel(`chat-ticket-${storedTicketId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `ticket_id=eq.${storedTicketId}`,
+      }, (payload: any) => {
+        const msg = payload?.new;
+        if (msg && msg.sender !== 'user') {
+          setUnreadCount((c) => c + 1);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      try { supabase.removeChannel(channel); } catch {}
+    };
   }, []);
 
   const formatPhoneNumber = (value: string) => {
@@ -191,30 +218,60 @@ export const ChatWidget = () => {
         attachmentFileName = attachment.name;
       }
 
-      // Enviar mensagem via Evolution API
-      const { data: sendResult, error: sendError } = await supabase.functions.invoke(
-        "send-chat-message",
-        {
-          body: {
-            ticketId: ticket.id,
-            customerName: formData.name,
-            customerPhone: phoneWithCountryCode,
-            subject: formData.subject,
-            message: formData.message,
-            pageUrl: window.location.href,
-            attachmentBase64,
-            attachmentFileName,
-          },
-        }
-      );
+      // Backoff de envio com registro de tentativas
+      let success = false;
+      const delays = [0, 2000, 5000];
+      for (let i = 0; i < delays.length; i++) {
+        const attemptNum = i + 1;
+        // Registrar tentativa PENDING
+        const { data: attemptRow } = await supabase
+          .from('chat_send_attempts')
+          .insert({ ticket_id: ticket.id, status: 'pending', attempt_number: attemptNum })
+          .select()
+          .single();
 
-      if (sendError) {
-        console.error("Error sending message:", sendError);
-        toast.error("Erro ao enviar mensagem. Tente novamente.");
-        return;
+        const { data: sendResult, error: sendError } = await supabase.functions.invoke(
+          "send-chat-message",
+          {
+            body: {
+              ticketId: ticket.id,
+              customerName: formData.name,
+              customerPhone: phoneWithCountryCode,
+              subject: formData.subject,
+              message: formData.message,
+              pageUrl: window.location.href,
+              attachmentBase64,
+              attachmentFileName,
+            },
+          }
+        );
+
+        if (sendError || !sendResult?.success) {
+          // Atualizar tentativa para ERROR
+          if (attemptRow?.id) {
+            await supabase
+              .from('chat_send_attempts')
+              .update({ status: 'error', error_message: sendError?.message || 'Falha ao enviar' })
+              .eq('id', attemptRow.id);
+          }
+          if (i < delays.length - 1) {
+            await new Promise((r) => setTimeout(r, delays[i + 1]));
+            continue;
+          }
+        } else {
+          // Atualizar tentativa para SUCCESS
+          if (attemptRow?.id) {
+            await supabase
+              .from('chat_send_attempts')
+              .update({ status: 'success' })
+              .eq('id', attemptRow.id);
+          }
+          success = true;
+          break;
+        }
       }
 
-      if (sendResult?.success) {
+      if (success) {
         const confirmationMsg = isOnline 
           ? "Recebemos sua mensagem! Já te respondemos pelo WhatsApp."
           : autoResponses.offline_confirmation;
@@ -224,8 +281,9 @@ export const ChatWidget = () => {
         // Salvar no localStorage
         localStorage.setItem("chat_ticket_id", ticket.id);
         localStorage.setItem("chat_ticket_created", new Date().toISOString());
+        setActiveTicketId(ticket.id);
       } else {
-        toast.error("Não foi possível enviar sua mensagem. Tente novamente.");
+        toast.error("Não foi possível enviar sua mensagem após algumas tentativas. Tente novamente.");
       }
     } catch (error) {
       console.error("Error submitting chat:", error);

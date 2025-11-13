@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Package, Upload } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Category {
@@ -25,6 +25,7 @@ interface Product {
   categories: Category | null;
   brand: string;
   image_url: string | null;
+  image_urls?: string[] | null;
   stock: number;
   featured: boolean;
 }
@@ -36,7 +37,10 @@ export const ProductsManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const MAX_IMAGES = 10;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -72,13 +76,14 @@ export const ProductsManager = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
+      // Consulta sem image_urls para evitar 400 caso o schema ainda não tenha refletido a coluna
+      const base = await supabase
         .from('products')
-        .select('*, categories(id, name, slug)')
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProducts((data as any) || []);
+      if (base.error) throw base.error;
+      setProducts((base.data as any) || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -117,12 +122,34 @@ export const ProductsManager = () => {
     }
   };
 
+  const handleImagesUpload = async (files: FileList | File[]): Promise<string[]> => {
+    const list = Array.from(files);
+    const urls: string[] = [];
+    for (const f of list) {
+      const url = await handleImageUpload(f);
+      if (url) urls.push(url);
+    }
+    return urls;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       const selectedCategory = categories.find(c => c.id === formData.category_id);
-      const productData = {
+      // Mescla imagens: principal primeiro, sem duplicatas e respeitando o limite
+      const mergedImages = (() => {
+        const list = [...uploadedImages];
+        if (formData.image_url) {
+          const idx = list.indexOf(formData.image_url);
+          if (idx > -1) {
+            list.splice(idx, 1);
+          }
+          list.unshift(formData.image_url);
+        }
+        return list.filter((u, i, arr) => arr.indexOf(u) === i).slice(0, MAX_IMAGES);
+      })();
+      const productBase = {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
@@ -133,25 +160,57 @@ export const ProductsManager = () => {
         stock: parseInt(formData.stock),
         featured: formData.featured,
       };
+      const productFull = {
+        ...productBase,
+        ...(mergedImages.length > 0 ? { image_urls: mergedImages } : {}),
+      } as any;
 
       if (editingProduct) {
-        const { error } = await supabase
-          .from('products')
-          .update(productData)
-          .eq('id', editingProduct.id);
-
-        if (error) throw error;
+        try {
+          const { error } = await supabase
+            .from('products')
+            .update(productFull)
+            .eq('id', editingProduct.id);
+          if (error) throw error;
+        } catch (error: any) {
+          const msg = String(error?.message || '').toLowerCase();
+          const status = (error as any)?.status;
+          if (msg.includes('image_urls') || msg.includes('column') || msg.includes('schema') || status === 400) {
+            // Fallback sem image_urls quando coluna não existir
+            const { error: fbError } = await supabase
+              .from('products')
+              .update(productBase as any)
+              .eq('id', editingProduct.id);
+            if (fbError) throw fbError;
+            toast({ title: 'Atualizado com compatibilidade', description: 'Outras imagens não foram persistidas (coluna image_urls ausente).', variant: 'default' });
+          } else {
+            throw error;
+          }
+        }
 
         toast({
           title: "Produto atualizado!",
           description: "O produto foi atualizado com sucesso.",
         });
       } else {
-        const { error } = await supabase
-          .from('products')
-          .insert([productData]);
-
-        if (error) throw error;
+        try {
+          const { error } = await supabase
+            .from('products')
+            .insert([productFull]);
+          if (error) throw error;
+        } catch (error: any) {
+          const msg = String(error?.message || '').toLowerCase();
+          const status = (error as any)?.status;
+          if (msg.includes('image_urls') || msg.includes('column') || msg.includes('schema') || status === 400) {
+            const { error: fbError } = await supabase
+              .from('products')
+              .insert([productBase as any]);
+            if (fbError) throw fbError;
+            toast({ title: 'Criado com compatibilidade', description: 'Outras imagens não foram persistidas (coluna image_urls ausente).', variant: 'default' });
+          } else {
+            throw error;
+          }
+        }
 
         toast({
           title: "Produto criado!",
@@ -162,11 +221,11 @@ export const ProductsManager = () => {
       setIsDialogOpen(false);
       resetForm();
       fetchProducts();
-    } catch (error) {
-      console.error('Error saving product:', error);
+    } catch (error: any) {
+      console.error('Error saving product:', error?.message || error);
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o produto.",
+        description: error?.message || "Não foi possível salvar o produto.",
         variant: "destructive",
       });
     }
@@ -211,11 +270,30 @@ export const ProductsManager = () => {
       stock: product.stock.toString(),
       featured: product.featured,
     });
+    const urlsRaw = (product.image_urls && Array.isArray(product.image_urls))
+      ? product.image_urls
+      : (product.image_url ? [product.image_url] : []);
+    const urls = (() => {
+      const list = [...urlsRaw];
+      if (product.image_url) {
+        const idx = list.indexOf(product.image_url);
+        if (idx > -1) {
+          list.splice(idx, 1);
+        }
+        list.unshift(product.image_url);
+      }
+      return list.filter((u, i, arr) => arr.indexOf(u) === i).slice(0, MAX_IMAGES);
+    })();
+    setUploadedImages(urls);
+    if (!product.image_url && urls.length > 0) {
+      setFormData(prev => ({ ...prev, image_url: urls[0] }));
+    }
     setIsDialogOpen(true);
   };
 
   const resetForm = () => {
     setEditingProduct(null);
+    setUploadedImages([]);
     setFormData({
       name: "",
       description: "",
@@ -250,12 +328,13 @@ export const ProductsManager = () => {
               Novo Produto
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="product-dialog-desc">
             <DialogHeader>
               <DialogTitle>
                 {editingProduct ? "Editar Produto" : "Novo Produto"}
               </DialogTitle>
             </DialogHeader>
+            <p id="product-dialog-desc" className="sr-only">Formulário para criar ou editar produto, com gerenciamento de imagens adicionais.</p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -337,7 +416,7 @@ export const ProductsManager = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="image_url">URL da Imagem</Label>
+                <Label htmlFor="image_url">URL da Imagem Principal</Label>
                 <Input
                   id="image_url"
                   type="url"
@@ -348,23 +427,143 @@ export const ProductsManager = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="image_file">Ou fazer upload de imagem</Label>
+                <Label htmlFor="image_file">Ou fazer upload de imagens (múltiplas)</Label>
+                {/* Input real fica oculto; usamos botão estilizado para melhor UX */}
                 <Input
                   id="image_file"
+                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
+                  multiple
+                  className="sr-only"
                   onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const url = await handleImageUpload(file);
-                      if (url) {
-                        setFormData({ ...formData, image_url: url });
-                      }
+                    const inputEl = e.currentTarget as HTMLInputElement;
+                    const filesList = inputEl.files;
+                    if (!filesList || filesList.length === 0) return;
+                    const current = uploadedImages;
+                    if (current.length >= MAX_IMAGES) {
+                      toast({ title: "Limite atingido", description: `Máximo de ${MAX_IMAGES} imagens.`, variant: "destructive" });
+                      inputEl.value = "";
+                      return;
                     }
+                    const spaceLeft = Math.max(0, MAX_IMAGES - current.length);
+                    const filesLimited = Array.from(filesList).slice(0, spaceLeft);
+                    if (filesList.length > filesLimited.length) {
+                      toast({ title: "Limitando upload", description: `Somente ${spaceLeft} imagens adicionais serão enviadas.` });
+                    }
+                    const urls = await handleImagesUpload(filesLimited);
+                    if (urls.length > 0) {
+                      const merged = [...current, ...urls].filter((u, i, arr) => arr.indexOf(u) === i).slice(0, MAX_IMAGES);
+                      setUploadedImages(merged);
+                      if (!formData.image_url) {
+                        setFormData({ ...formData, image_url: merged[0] });
+                      }
+                      toast({ title: "Imagens adicionadas", description: `${urls.length} novas imagens foram adicionadas.` });
+                    }
+                    inputEl.value = "";
                   }}
                   disabled={uploading}
                 />
+                <div className="flex items-center justify-between gap-3">
+                  <Button
+                    type="button"
+                    variant="hero"
+                    size="lg"
+                    className="w-full sm:w-auto gap-2 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-primary"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading || uploadedImages.length >= MAX_IMAGES}
+                    aria-label="Escolher arquivos para upload"
+                    title="Escolher arquivos"
+                  >
+                    <Upload className="h-5 w-5" />
+                    Escolher arquivos
+                  </Button>
+                  <span className="text-sm text-muted-foreground">{uploadedImages.length}/{MAX_IMAGES} imagens</span>
+                </div>
                 {uploading && <p className="text-sm text-muted-foreground">Fazendo upload...</p>}
+                {uploadedImages.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm text-muted-foreground mb-2">Selecione a imagem principal:</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {uploadedImages.map((url, idx) => (
+                        <div
+                          key={url}
+                          className={`relative h-24 rounded-md overflow-hidden border ${formData.image_url === url ? 'border-primary' : 'border-muted'}`}
+                          title={formData.image_url === url ? 'Imagem principal' : 'Clique para definir como principal'}
+                        >
+                          <button
+                            type="button"
+                            className="absolute inset-0"
+                            onClick={() => {
+                              setFormData({ ...formData, image_url: url });
+                              setUploadedImages([url, ...uploadedImages.filter(u => u !== url)]);
+                            }}
+                            aria-label="Definir como principal"
+                          />
+                          <img src={url} alt="Pré-visualização" className="w-full h-full object-cover pointer-events-none" />
+                          {/* Indicadores e ações */}
+                          {formData.image_url === url && (
+                            <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded">Principal</span>
+                          )}
+                          <span className="absolute bottom-1 left-1 bg-muted/80 text-xs px-1.5 py-0.5 rounded">{idx + 1}</span>
+                          <div className="absolute top-1 right-1 flex items-center gap-1">
+                            <button
+                              type="button"
+                              className="glass rounded p-1 hover:brightness-110"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (idx === 0) return;
+                                const next = [...uploadedImages];
+                                const [item] = next.splice(idx, 1);
+                                next.splice(idx - 1, 0, item);
+                                setUploadedImages(next);
+                              }}
+                              aria-label="Mover imagem para esquerda"
+                              title="Mover para esquerda"
+                              disabled={idx === 0}
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              className="glass rounded p-1 hover:brightness-110"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const next = [...uploadedImages];
+                                if (idx >= next.length - 1) return;
+                                const [item] = next.splice(idx, 1);
+                                next.splice(idx + 1, 0, item);
+                                setUploadedImages(next);
+                              }}
+                              aria-label="Mover imagem para direita"
+                              title="Mover para direita"
+                              disabled={idx >= uploadedImages.length - 1}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              className="glass rounded p-1 hover:brightness-110"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const next = uploadedImages.filter(u => u !== url);
+                                setUploadedImages(next);
+                                if (formData.image_url === url) {
+                                  const newPrincipal = next[0] || '';
+                                  setFormData({ ...formData, image_url: newPrincipal });
+                                }
+                              }}
+                              aria-label="Excluir imagem desta galeria"
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2">

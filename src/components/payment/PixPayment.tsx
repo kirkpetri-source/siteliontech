@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Copy, QrCode } from 'lucide-react';
@@ -6,15 +7,39 @@ import { useToast } from '@/hooks/use-toast';
 interface PixPaymentProps {
   qrCode?: string;
   qrCodeBase64?: string;
+  expiresAt?: string | null;
+  status?: string | null;
   onGenerate: () => Promise<void>;
   isGenerating: boolean;
 }
 
-export const PixPayment = ({ qrCode, qrCodeBase64, onGenerate, isGenerating }: PixPaymentProps) => {
+export const PixPayment = ({ qrCode, qrCodeBase64, expiresAt, status, onGenerate, isGenerating }: PixPaymentProps) => {
   const { toast } = useToast();
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    if (!expiresAt) {
+      setRemaining(null);
+      setIsExpired(false);
+      return;
+    }
+
+    const target = new Date(expiresAt).getTime();
+    const tick = () => {
+      const now = Date.now();
+      const diff = Math.max(0, Math.floor((target - now) / 1000));
+      setRemaining(diff);
+      setIsExpired(diff <= 0);
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
 
   const copyToClipboard = () => {
-    if (qrCode) {
+    if (qrCode && !isExpired) {
       navigator.clipboard.writeText(qrCode);
       toast({
         title: "Código copiado!",
@@ -56,9 +81,17 @@ export const PixPayment = ({ qrCode, qrCodeBase64, onGenerate, isGenerating }: P
           <p className="text-sm text-muted-foreground">
             Escaneie o QR Code ou copie o código
           </p>
+          {status && (
+            <p className="text-xs mt-2">
+              Status: <span className="font-semibold">{status}</span>
+            </p>
+          )}
+          {remaining !== null && !isExpired && (
+            <p className="text-xs text-muted-foreground mt-1">Expira em {Math.floor(remaining / 60)}:{(remaining % 60).toString().padStart(2, '0')}</p>
+          )}
         </div>
 
-        {qrCodeBase64 && (
+        {qrCodeBase64 && !isExpired && (
           <div className="flex justify-center">
             <img 
               src={`data:image/png;base64,${qrCodeBase64}`} 
@@ -68,19 +101,34 @@ export const PixPayment = ({ qrCode, qrCodeBase64, onGenerate, isGenerating }: P
           </div>
         )}
 
-        <div className="space-y-2">
-          <div className="p-3 bg-muted rounded-lg break-all text-sm font-mono">
-            {qrCode}
+        {!isExpired ? (
+          <div className="space-y-2">
+            <div className="p-3 bg-muted rounded-lg break-all text-sm font-mono">
+              {qrCode}
+            </div>
+            <Button 
+              onClick={copyToClipboard}
+              variant="outline"
+              className="w-full"
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copiar código PIX
+            </Button>
           </div>
-          <Button 
-            onClick={copyToClipboard}
-            variant="outline"
-            className="w-full"
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Copiar código PIX
-          </Button>
-        </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
+              QR Code expirado. Gere um novo para pagar.
+            </div>
+            <Button 
+              onClick={onGenerate}
+              disabled={isGenerating}
+              className="w-full"
+            >
+              {isGenerating ? 'Gerando...' : 'Gerar novo QR Code'}
+            </Button>
+          </div>
+        )}
 
         <div className="text-xs text-muted-foreground text-center">
           O pagamento será confirmado automaticamente após a aprovação

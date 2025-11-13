@@ -379,7 +379,7 @@ export const CategoriesManager = () => {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="categories-dialog-desc">
           <DialogHeader>
             <DialogTitle>
               {editingCategory ? "Editar Categoria" : "Nova Categoria"}
@@ -390,6 +390,7 @@ export const CategoriesManager = () => {
                 : "Crie uma nova categoria para organizar seus produtos"}
             </DialogDescription>
           </DialogHeader>
+          <p id="categories-dialog-desc" className="sr-only">Formulário para criar ou editar categorias.</p>
 
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">

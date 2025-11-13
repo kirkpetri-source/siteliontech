@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
+import Produto from "@/pages/Produto";
 
 const queryClient = new QueryClient();
 
@@ -25,7 +26,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <CartProvider>
             <ChatWidget />
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/servicos" element={<Servicos />} />
               <Route path="/loja" element={<Loja />} />
+              <Route path="/produto/:id" element={<Produto />} />
               <Route path="/cases" element={<Cases />} />
               <Route path="/sobre" element={<Sobre />} />
               <Route path="/contato" element={<Contato />} />

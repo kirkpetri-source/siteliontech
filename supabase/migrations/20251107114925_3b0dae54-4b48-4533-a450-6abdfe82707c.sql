@@ -14,12 +14,14 @@ CREATE TABLE IF NOT EXISTS public.business_hours (
 ALTER TABLE public.business_hours ENABLE ROW LEVEL SECURITY;
 
 -- Allow public read access (for chat widget to check hours)
+DROP POLICY IF EXISTS "Anyone can view business hours" ON public.business_hours;
 CREATE POLICY "Anyone can view business hours"
 ON public.business_hours
 FOR SELECT
 USING (true);
 
 -- Only authenticated users can modify
+DROP POLICY IF EXISTS "Authenticated users can modify business hours" ON public.business_hours;
 CREATE POLICY "Authenticated users can modify business hours"
 ON public.business_hours
 FOR ALL
@@ -38,6 +40,7 @@ INSERT INTO public.business_hours (day_of_week, is_enabled, start_time, end_time
 ON CONFLICT (day_of_week) DO NOTHING;
 
 -- Create trigger for automatic timestamp updates
+DROP TRIGGER IF EXISTS update_business_hours_updated_at ON public.business_hours;
 CREATE TRIGGER update_business_hours_updated_at
 BEFORE UPDATE ON public.business_hours
 FOR EACH ROW

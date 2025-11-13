@@ -252,12 +252,13 @@ export const CouponsManager = () => {
               Novo Cupom
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl" aria-describedby="coupons-dialog-desc">
             <DialogHeader>
               <DialogTitle>
                 {editingCoupon ? "Editar Cupom" : "Novo Cupom"}
               </DialogTitle>
             </DialogHeader>
+            <p id="coupons-dialog-desc" className="sr-only">Formulário para criar ou editar cupons de desconto.</p>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

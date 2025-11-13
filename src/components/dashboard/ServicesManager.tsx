@@ -213,10 +213,11 @@ export const ServicesManager = () => {
               <DialogTrigger asChild>
                 <Button><Plus className="mr-2 h-4 w-4" />Novo Serviço</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingService ? "Editar Serviço" : "Novo Serviço"}</DialogTitle>
-                </DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="services-dialog-desc">
+          <DialogHeader>
+            <DialogTitle>{editingService ? "Editar Serviço" : "Novo Serviço"}</DialogTitle>
+          </DialogHeader>
+          <p id="services-dialog-desc" className="sr-only">Formulário para criar ou editar serviços oferecidos.</p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

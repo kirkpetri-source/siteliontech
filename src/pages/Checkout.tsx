@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { Navigation } from "@/components/Navigation";
@@ -37,6 +37,8 @@ const Checkout = () => {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [pixData, setPixData] = useState<any>(null);
   const [isGeneratingPix, setIsGeneratingPix] = useState(false);
+  const [pixExpiresAt, setPixExpiresAt] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   
@@ -238,10 +240,19 @@ const Checkout = () => {
           qr_code: data.qr_code,
           qr_code_base64: data.qr_code_base64,
           payment_status: data.status,
+          ticket_url: (data && (data.ticket_url || data.ticketUrl)) ?? null,
         })
         .eq('id', currentOrderId);
 
       setPixData(data);
+      setPaymentStatus(data.status);
+      const expires = (data && (data.date_of_expiration || data.expiration_date || data.expires_at)) ?? null;
+      if (expires) {
+        setPixExpiresAt(expires);
+      } else {
+        // fallback de 30 minutos
+        setPixExpiresAt(new Date(Date.now() + 30 * 60 * 1000).toISOString());
+      }
       
       toast({
         title: "QR Code gerado!",
@@ -319,6 +330,34 @@ const Checkout = () => {
       });
     }
   };
+
+  // Subscrição em tempo real para status do pedido (PIX)
+  useEffect(() => {
+    if (!currentOrderId) return;
+    const channel = supabase
+      .channel(`order-status-${currentOrderId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+        filter: `id=eq.${currentOrderId}`,
+      }, (payload: any) => {
+        const newPaymentStatus = payload?.new?.payment_status || null;
+        const newStatus = payload?.new?.status || null;
+        if (newPaymentStatus) setPaymentStatus(newPaymentStatus);
+        if (newPaymentStatus === 'approved' || newStatus === 'processing') {
+          toast({
+            title: 'PIX aprovado!',
+            description: 'Seu pedido está sendo processado.',
+          });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      try { supabase.removeChannel(channel); } catch {}
+    };
+  }, [currentOrderId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -856,6 +895,8 @@ const Checkout = () => {
                       <PixPayment
                         qrCode={pixData?.qr_code}
                         qrCodeBase64={pixData?.qr_code_base64}
+                        expiresAt={pixExpiresAt}
+                        status={paymentStatus}
                         onGenerate={handleGeneratePix}
                         isGenerating={isGeneratingPix}
                       />

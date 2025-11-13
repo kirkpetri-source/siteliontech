@@ -63,12 +63,20 @@ export function useOrderNotifications() {
 
     // Get the latest order on mount to set initial state
     const getLatestOrder = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("orders")
         .select("id")
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        // Avoid noisy 406 when there are no orders yet
+        if ((error as any).status !== 406) {
+          console.warn("getLatestOrder error:", error.message);
+        }
+        return;
+      }
 
       if (data) {
         setLastOrderId(data.id);

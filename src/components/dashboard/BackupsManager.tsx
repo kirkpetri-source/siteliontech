@@ -477,13 +477,14 @@ export const BackupsManager = () => {
 
       {/* Restore Dialog - File Selection */}
       <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="restore-dialog-desc">
           <DialogHeader>
             <DialogTitle>Restaurar Backup</DialogTitle>
             <DialogDescription>
               Selecione um arquivo de backup JSON para restaurar
             </DialogDescription>
           </DialogHeader>
+          <p id="restore-dialog-desc" className="sr-only">Formulário para selecionar arquivo de backup e iniciar restauração.</p>
           <div className="space-y-4 py-4">
             <Alert>
               <AlertCircle className="h-4 w-4" />
@@ -524,13 +525,14 @@ export const BackupsManager = () => {
 
       {/* Preview Dialog */}
       <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" aria-describedby="preview-dialog-desc">
           <DialogHeader>
             <DialogTitle>Prévia do Backup</DialogTitle>
             <DialogDescription>
               Revise os dados que serão restaurados
             </DialogDescription>
           </DialogHeader>
+          <p id="preview-dialog-desc" className="sr-only">Pré-visualização dos dados do backup antes da restauração.</p>
           {backupPreview && (
             <div className="space-y-4 py-4">
               <div className="grid gap-4 md:grid-cols-3">

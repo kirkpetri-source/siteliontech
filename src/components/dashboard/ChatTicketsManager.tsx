@@ -284,10 +284,11 @@ export const ChatTicketsManager = () => {
                     Gerenciar
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl" aria-describedby="chat-ticket-dialog-desc">
                   <DialogHeader>
                     <DialogTitle>Ticket #{ticket.id.slice(0, 8)}</DialogTitle>
                   </DialogHeader>
+                  <p id="chat-ticket-dialog-desc" className="sr-only">Gerenciar status e observações de um ticket de atendimento.</p>
 
                   <div className="space-y-4">
                     <div>

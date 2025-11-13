@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogDescription } from "./ui/dialog";
 import { Maximize2 } from "lucide-react";
 
 interface BeforeAfterProps {
@@ -107,7 +107,10 @@ export const BeforeAfter = ({ beforeImage, afterImage, title, description, categ
       </Card>
 
       {/* Modal for expanded view */}
-      <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
+      <DialogContent className="max-w-4xl w-full p-0 overflow-hidden" aria-describedby="before-after-dialog-desc">
+        <DialogDescription id="before-after-dialog-desc" className="sr-only">
+          Visualização expandida do comparativo Antes/Depois com controle deslizante.
+        </DialogDescription>
         <div
           className="relative h-[60vh] overflow-hidden cursor-ew-resize select-none touch-none"
           onMouseDown={() => setIsDragging(true)}

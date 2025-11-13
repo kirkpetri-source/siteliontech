@@ -19,6 +19,7 @@ import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { ChatTicketsManager } from "@/components/dashboard/ChatTicketsManager";
 import { BusinessHoursManager } from "@/components/dashboard/BusinessHoursManager";
 import { AutoResponsesManager } from "@/components/dashboard/AutoResponsesManager";
+import { ShopBannerManager } from "@/components/dashboard/ShopBannerManager";
 import {
   Shield, 
   LogOut, 
@@ -206,14 +207,28 @@ const Dashboard = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button
-              variant={activeSection === "backups" ? "default" : "ghost"}
-              onClick={() => setActiveSection("backups")}
-              className="gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Backups
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant={["backups", "shop-banner"].includes(activeSection) ? "default" : "ghost"}
+                  className="gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  Configurações
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 bg-background border shadow-lg z-50">
+                <DropdownMenuItem onClick={() => setActiveSection("shop-banner")} className="cursor-pointer">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Banner da Loja
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveSection("backups")} className="cursor-pointer">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Backups
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Conteúdo das Seções */}
@@ -231,6 +246,7 @@ const Dashboard = () => {
             {activeSection === "business-hours" && <BusinessHoursManager />}
             {activeSection === "auto-responses" && <AutoResponsesManager />}
             {activeSection === "contacts" && <ContactsList />}
+            {activeSection === "shop-banner" && <ShopBannerManager />}
             {activeSection === "backups" && <BackupsManager />}
           </div>
         </div>

@@ -39,7 +39,7 @@ export const InventoryManager = () => {
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select('id,name,stock,category,brand,price')
       .order('stock', { ascending: true });
 
     if (error) {

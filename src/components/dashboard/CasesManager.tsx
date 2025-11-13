@@ -205,10 +205,11 @@ export const CasesManager = () => {
               <DialogTrigger asChild>
                 <Button><Plus className="mr-2 h-4 w-4" />Novo Case</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="cases-dialog-desc">
                 <DialogHeader>
                   <DialogTitle>{editingCase ? "Editar Case" : "Novo Case"}</DialogTitle>
                 </DialogHeader>
+                <p id="cases-dialog-desc" className="sr-only">Formulário para criar ou editar cases com imagens antes e depois.</p>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="title">Título *</Label>
