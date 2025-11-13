@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Lock, Mail, User, LogIn, UserPlus } from "lucide-react";
+import { Lock, Mail, User, LogIn, UserPlus, Home } from "lucide-react";
 import logoLionTech from "@/assets/logo-lion-tech.jpg";
 
 const Auth = () => {
@@ -113,13 +113,26 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
       <div className="w-full max-w-md">
         <div className="glass rounded-3xl p-8 animate-fade-in">
+          {/* Voltar para a página inicial */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="text-sm text-muted-foreground hover:text-primary inline-flex items-center transition-colors"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Voltar ao início
+            </button>
+          </div>
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <img 
-              src={logoLionTech} 
-              alt="Lion Tech" 
-              className="h-20 w-20 rounded-full object-cover"
-            />
+            <button type="button" onClick={() => navigate("/")} title="Ir para a página inicial">
+              <img 
+                src={logoLionTech} 
+                alt="Lion Tech" 
+                className="h-20 w-20 rounded-full object-cover"
+              />
+            </button>
           </div>
 
           <h1 className="text-3xl font-bold text-center mb-2">
