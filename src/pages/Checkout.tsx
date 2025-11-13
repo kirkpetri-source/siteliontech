@@ -426,7 +426,7 @@ const Checkout = () => {
       }
       
       orderSummary += `\n✅ *Total Final:* R$ ${finalTotal.toFixed(2)}`;
-      orderSummary += `\n📝 *Pedido:* #${order.id.substring(0, 8).toUpperCase()}`;
+      orderSummary += `\n📝 *Pedido:* #${newOrderId.substring(0, 8).toUpperCase()}`;
 
       // Send WhatsApp notification
       const { error: whatsappError } = await supabase.functions.invoke('send-whatsapp', {
