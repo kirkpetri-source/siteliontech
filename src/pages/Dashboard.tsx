@@ -15,6 +15,7 @@ import { BackupsManager } from "@/components/dashboard/BackupsManager";
 import { CategoriesManager } from "@/components/dashboard/CategoriesManager";
 import { ServicesManager } from "@/components/dashboard/ServicesManager";
 import { CasesManager } from "@/components/dashboard/CasesManager";
+import { QuotesManager } from "@/components/dashboard/QuotesManager";
 import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { ChatTicketsManager } from "@/components/dashboard/ChatTicketsManager";
 import { BusinessHoursManager } from "@/components/dashboard/BusinessHoursManager";
@@ -97,6 +98,15 @@ const Dashboard = () => {
             >
               <LayoutDashboard className="h-4 w-4" />
               Visão Geral
+            </Button>
+
+            <Button
+              variant={activeSection === "quotes" ? "default" : "ghost"}
+              onClick={() => setActiveSection("quotes")}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Orçamentos
             </Button>
 
             <Button
@@ -241,6 +251,7 @@ const Dashboard = () => {
             {activeSection === "inventory" && <InventoryManager />}
             {activeSection === "services" && <ServicesManager />}
             {activeSection === "cases" && <CasesManager />}
+            {activeSection === "quotes" && <QuotesManager />}
             {activeSection === "coupons" && <CouponsManager />}
             {activeSection === "chat" && <ChatTicketsManager />}
             {activeSection === "business-hours" && <BusinessHoursManager />}

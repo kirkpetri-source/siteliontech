@@ -27,6 +27,8 @@ export const ChatWidget = () => {
   });
   const [attachment, setAttachment] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [ticketMeta, setTicketMeta] = useState<any | null>(null);
   const [autoResponses, setAutoResponses] = useState({
     offline_welcome: "Olá! 👋 No momento estamos fora do horário de atendimento, mas fique tranquilo! Registramos sua mensagem e responderemos assim que possível pelo WhatsApp.",
     offline_confirmation: "Recebemos sua mensagem! Nossa equipe responderá em breve durante nosso horário de atendimento.",
@@ -117,6 +119,9 @@ export const ChatWidget = () => {
         if (msg && msg.sender !== 'user') {
           setUnreadCount((c) => c + 1);
         }
+        if (msg) {
+          setChatMessages((prev) => [...prev, msg]);
+        }
       })
       .subscribe();
 
@@ -124,6 +129,31 @@ export const ChatWidget = () => {
       try { supabase.removeChannel(channel); } catch {}
     };
   }, []);
+
+  // Load existing messages and ticket metadata when activeTicketId is set
+  useEffect(() => {
+    const loadTicketData = async () => {
+      if (!activeTicketId) return;
+      try {
+        const { data: msgs } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('ticket_id', activeTicketId)
+          .order('sent_at', { ascending: true });
+        setChatMessages(msgs || []);
+
+        const { data: ticket } = await supabase
+          .from('chat_tickets')
+          .select('id, subject, page_url, attachment_url')
+          .eq('id', activeTicketId)
+          .single();
+        setTicketMeta(ticket || null);
+      } catch (err) {
+        console.error('Erro ao carregar conversa:', err);
+      }
+    };
+    loadTicketData();
+  }, [activeTicketId]);
 
   const formatPhoneNumber = (value: string) => {
     const numbers = value.replace(/\D/g, "");
@@ -136,6 +166,27 @@ export const ChatWidget = () => {
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value);
     setFormData({ ...formData, phone: formatted });
+  };
+
+  const validateForm = () => {
+    const errors: string[] = [];
+    if (!formData.name.trim()) errors.push('Informe seu nome.');
+    const rawPhone = formData.phone.replace(/\D/g, '');
+    if (rawPhone.length < 10 || rawPhone.length > 11) errors.push('Informe um WhatsApp válido com DDD.');
+    if (!formData.subject.trim()) errors.push('Selecione um assunto.');
+    if (!formData.message.trim() || formData.message.trim().length < 3) errors.push('Escreva uma mensagem (mín. 3 caracteres).');
+    if (!formData.lgpdConsent) errors.push('É necessário aceitar a LGPD para prosseguir.');
+    if (attachment) {
+      const maxBytes = 8 * 1024 * 1024; // 8MB
+      const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','image/png','image/jpeg'];
+      if (attachment.size > maxBytes) errors.push('Anexo acima de 8MB.');
+      if (!allowed.includes(attachment.type)) errors.push('Tipo de arquivo não suportado.');
+    }
+    if (errors.length) {
+      toast.error(errors.join('\n'));
+      return false;
+    }
+    return true;
   };
 
   const validatePhone = (phone: string) => {
@@ -188,10 +239,12 @@ export const ChatWidget = () => {
     setIsSubmitting(true);
 
     try {
-      // Criar ticket
-      const { data: ticket, error: ticketError } = await supabase
+      // Criar ticket com id gerado no cliente para evitar SELECT sob RLS
+      const ticketId = crypto.randomUUID();
+      const { error: ticketError } = await supabase
         .from("chat_tickets")
         .insert({
+          id: ticketId,
           customer_name: formData.name,
           customer_phone: phoneWithCountryCode,
           subject: formData.subject,
@@ -199,9 +252,7 @@ export const ChatWidget = () => {
           page_url: window.location.href,
           lgpd_consent: formData.lgpdConsent,
           status: "new",
-        })
-        .select()
-        .single();
+        });
 
       if (ticketError) throw ticketError;
 
@@ -218,23 +269,22 @@ export const ChatWidget = () => {
         attachmentFileName = attachment.name;
       }
 
+      // Validação antes de enviar
+      if (!validateForm()) {
+        setIsSubmitting(false);
+        return;
+      }
+
       // Backoff de envio com registro de tentativas
       let success = false;
+      let lastErrorMessage: string | null = null;
       const delays = [0, 2000, 5000];
       for (let i = 0; i < delays.length; i++) {
-        const attemptNum = i + 1;
-        // Registrar tentativa PENDING
-        const { data: attemptRow } = await supabase
-          .from('chat_send_attempts')
-          .insert({ ticket_id: ticket.id, status: 'pending', attempt_number: attemptNum })
-          .select()
-          .single();
-
         const { data: sendResult, error: sendError } = await supabase.functions.invoke(
           "send-chat-message",
           {
             body: {
-              ticketId: ticket.id,
+              ticketId: ticketId,
               customerName: formData.name,
               customerPhone: phoneWithCountryCode,
               subject: formData.subject,
@@ -247,25 +297,12 @@ export const ChatWidget = () => {
         );
 
         if (sendError || !sendResult?.success) {
-          // Atualizar tentativa para ERROR
-          if (attemptRow?.id) {
-            await supabase
-              .from('chat_send_attempts')
-              .update({ status: 'error', error_message: sendError?.message || 'Falha ao enviar' })
-              .eq('id', attemptRow.id);
-          }
+          lastErrorMessage = sendError?.message || sendResult?.error || 'Falha ao enviar';
           if (i < delays.length - 1) {
             await new Promise((r) => setTimeout(r, delays[i + 1]));
             continue;
           }
         } else {
-          // Atualizar tentativa para SUCCESS
-          if (attemptRow?.id) {
-            await supabase
-              .from('chat_send_attempts')
-              .update({ status: 'success' })
-              .eq('id', attemptRow.id);
-          }
           success = true;
           break;
         }
@@ -279,18 +316,44 @@ export const ChatWidget = () => {
         setStep("chat");
         
         // Salvar no localStorage
-        localStorage.setItem("chat_ticket_id", ticket.id);
+        localStorage.setItem("chat_ticket_id", ticketId);
         localStorage.setItem("chat_ticket_created", new Date().toISOString());
-        setActiveTicketId(ticket.id);
+        setActiveTicketId(ticketId);
       } else {
-        toast.error("Não foi possível enviar sua mensagem após algumas tentativas. Tente novamente.");
+        // Fallback: notificar atendente com assunto + mensagem e confirmar ao cliente
+        try {
+          // Confirmar ao cliente via welcome, caso a função principal esteja com instabilidade
+          const { error: whatsappError } = await supabase.functions.invoke('send-whatsapp', {
+            body: {
+              phoneNumber: phoneWithCountryCode,
+              message: '',
+              messageType: 'welcome',
+              additionalData: {
+                customerName: formData.name,
+                customerPhone: formData.phone,
+              },
+            },
+          });
+
+          if (!whatsappError) {
+            toast.success("Estamos com instabilidade no atendimento. Enviamos uma confirmação pelo WhatsApp e responderemos em breve.");
+            setStep("chat");
+            localStorage.setItem("chat_ticket_id", ticketId);
+            localStorage.setItem("chat_ticket_created", new Date().toISOString());
+            setActiveTicketId(ticketId);
+          } else {
+            toast.error(`Não foi possível enviar sua mensagem. ${lastErrorMessage ? `Detalhe: ${lastErrorMessage}` : ''}`);
+          }
+        } catch (fallbackErr) {
+          toast.error(`Não foi possível enviar sua mensagem. ${lastErrorMessage ? `Detalhe: ${lastErrorMessage}` : ''}`);
+        }
       }
-    } catch (error) {
-      console.error("Error submitting chat:", error);
-      toast.error("Erro ao enviar mensagem. Tente novamente.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  } catch (error) {
+    console.error("Error submitting chat:", error);
+    toast.error("Erro ao enviar mensagem. Tente novamente.");
+  } finally {
+    setIsSubmitting(false);
+  }
   };
 
   const getWelcomeMessage = () => {
@@ -462,15 +525,25 @@ export const ChatWidget = () => {
                 </Button>
               </form>
             ) : (
-              <div className="text-center py-8">
-                <div className="mb-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageCircle className="h-8 w-8 text-primary" />
+              <div className="py-2">
+                <h4 className="font-semibold mb-2">Conversa</h4>
+                {ticketMeta?.attachment_url && (
+                  <div className="text-xs mb-2">
+                    Anexo enviado: <a className="underline" href={ticketMeta.attachment_url} target="_blank" rel="noreferrer">arquivo</a>
                   </div>
-                  <h4 className="font-semibold mb-2">Mensagem enviada!</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Continue a conversa pelo WhatsApp
-                  </p>
+                )}
+                <div className="space-y-3 max-h-[360px] overflow-y-auto pr-2">
+                  {chatMessages.map((m) => (
+                    <div key={m.id} className={`flex ${m.sender === 'customer' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`rounded-xl px-3 py-2 text-sm shadow ${m.sender === 'customer' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                        <div>{m.message}</div>
+                        <div className="text-[10px] opacity-70 mt-1">{new Date(m.sent_at).toLocaleString('pt-BR')}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {chatMessages.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Sem mensagens ainda. Aguarde nosso retorno por aqui.</p>
+                  )}
                 </div>
               </div>
             )}

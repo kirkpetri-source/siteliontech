@@ -1,9 +1,14 @@
+// @ts-nocheck
+// Deno Edge Function: TypeScript in the IDE may not resolve remote imports or Deno globals.
+// ts-nocheck avoids false diagnostics while preserving runtime behavior on Supabase.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-requested-with",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Max-Age": "86400",
 };
 
 interface ChatMessageRequest {
@@ -17,9 +22,10 @@ interface ChatMessageRequest {
   attachmentFileName?: string;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    // Explicit OK status fixes CORS preflight failures in some browsers
+    return new Response("ok", { headers: corsHeaders, status: 200 });
   }
 
   try {
@@ -37,9 +43,12 @@ serve(async (req) => {
     console.log("Evolution Base URL:", evolutionBaseUrl);
     console.log("Evolution Instance:", evolutionInstance);
 
-    // Validar campos obrigatórios
-    if (!body.customerPhone || !body.message || !body.ticketId) {
-      throw new Error("Missing required fields");
+    // Validações de integridade
+    const sanitizedPhone = (body.customerPhone || '').replace(/\D/g, '');
+    if (!sanitizedPhone) throw new Error("Missing required field: customerPhone");
+    if (!body.message || !body.ticketId) throw new Error("Missing required fields");
+    if (body.attachmentBase64 && !body.attachmentFileName) {
+      throw new Error("Attachment filename required when attachmentBase64 is provided");
     }
 
     // Formatar mensagem para o atendente
@@ -55,6 +64,37 @@ ${body.pageUrl ? `Página: ${body.pageUrl}` : ""}`;
     let adminMessageSuccess = false;
     let customerMessageSuccess = false;
     let errorMessage = "";
+
+    // Upload do anexo (se existir) e atualizar o ticket com URL pública
+    let attachmentPublicUrl: string | null = null;
+    if (body.attachmentBase64 && body.attachmentFileName) {
+      try {
+        // Garante bucket de anexos
+        try {
+          await supabase.storage.createBucket('chat_attachments', { public: true });
+        } catch (_) {
+          // Ignora erro se já existir
+        }
+
+        const fileBytes = Uint8Array.from(atob(body.attachmentBase64), (c) => c.charCodeAt(0));
+        const path = `tickets/${body.ticketId}/${Date.now()}-${body.attachmentFileName}`;
+        const uploadRes = await supabase.storage.from('chat_attachments').upload(path, fileBytes, {
+          contentType: 'application/octet-stream',
+          upsert: false,
+        });
+        if (!uploadRes.error) {
+          const { data: pub } = await supabase.storage.from('chat_attachments').getPublicUrl(path);
+          attachmentPublicUrl = pub?.publicUrl || null;
+          // Atualiza o ticket com a URL do anexo
+          await supabase
+            .from('chat_tickets')
+            .update({ attachment_url: attachmentPublicUrl })
+            .eq('id', body.ticketId);
+        }
+      } catch (storageErr) {
+        console.error('Storage upload error:', storageErr);
+      }
+    }
 
     // Enviar mensagem para o atendente
     if (evolutionBaseUrl && evolutionInstance && evolutionToken && whatsappAtendente) {
@@ -84,7 +124,7 @@ ${body.pageUrl ? `Página: ${body.pageUrl}` : ""}`;
           console.error(errorMessage);
         }
 
-        // Enviar anexo se existir
+        // Enviar anexo para o atendente se existir
         if (body.attachmentBase64 && body.attachmentFileName) {
           console.log("Sending attachment to admin");
           await fetch(
@@ -159,12 +199,20 @@ ${body.pageUrl ? `Página: ${body.pageUrl}` : ""}`;
         .eq("id", body.ticketId);
     }
 
-    // Registrar mensagem no banco
+    // Registrar mensagem no banco com status da evolução
     await supabase.from("chat_messages").insert({
       ticket_id: body.ticketId,
       sender: "customer",
       message: body.message,
       evolution_status: adminMessageSuccess ? "sent" : "failed",
+    });
+
+    // Registrar mensagem do sistema com metadados básicos
+    await supabase.from("chat_messages").insert({
+      ticket_id: body.ticketId,
+      sender: "system",
+      message: `Assunto: ${body.subject}\nPágina: ${body.pageUrl || "-"}${attachmentPublicUrl ? `\nAnexo: ${attachmentPublicUrl}` : ''}`,
+      evolution_status: "sent",
     });
 
     return new Response(

@@ -1,5 +1,6 @@
 import { ArrowRight, Wrench, Zap, Shield } from "lucide-react";
 import { Button } from "./ui/button";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-tech.jpg";
 
 export const Hero = () => {
@@ -35,12 +36,14 @@ export const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <Button variant="hero" size="lg" className="group text-lg">
-              Chamar no WhatsApp
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            <Button variant="hero" size="lg" className="group text-lg" asChild>
+              <Link to="/servicos?quote=open">
+                Chamar no WhatsApp
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </Button>
-            <Button variant="outline" size="lg" className="text-lg">
-              Ver Serviços
+            <Button variant="outline" size="lg" className="text-lg" asChild>
+              <Link to="/servicos">Ver Serviços</Link>
             </Button>
           </div>
 

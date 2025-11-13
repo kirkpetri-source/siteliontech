@@ -8,9 +8,12 @@ interface ServiceCardProps {
   icon: LucideIcon;
   price: string;
   image?: string;
+  onRequestQuote?: () => void;
+  benefits?: string[];
+  prerequisites?: string[];
 }
 
-export const ServiceCard = ({ title, description, icon: Icon, price, image }: ServiceCardProps) => {
+export const ServiceCard = ({ title, description, icon: Icon, price, image, onRequestQuote, benefits, prerequisites }: ServiceCardProps) => {
   return (
     <Card className="group overflow-hidden hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 border-border/50">
       {image && (
@@ -36,13 +39,30 @@ export const ServiceCard = ({ title, description, icon: Icon, price, image }: Se
       
       <CardContent>
         <p className="text-2xl font-bold text-gradient font-mono">{price}</p>
+        {(benefits && benefits.length > 0) && (
+          <div className="mt-4">
+            <p className="text-sm font-medium">Benefícios</p>
+            <ul className="text-sm text-muted-foreground list-disc list-inside">
+              {benefits.slice(0,3).map((b, i) => (<li key={i}>{b}</li>))}
+            </ul>
+          </div>
+        )}
+        {(prerequisites && prerequisites.length > 0) && (
+          <div className="mt-3">
+            <p className="text-sm font-medium">Pré-requisitos</p>
+            <ul className="text-sm text-muted-foreground list-disc list-inside">
+              {prerequisites.slice(0,3).map((p, i) => (<li key={i}>{p}</li>))}
+            </ul>
+          </div>
+        )}
       </CardContent>
       
-      <CardFooter>
+      <CardFooter className="grid grid-cols-2 gap-2">
         <Button variant="ghost" className="w-full group/btn">
           Saiba mais
           <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
         </Button>
+        <Button className="w-full" onClick={onRequestQuote}>Solicitar Orçamento</Button>
       </CardFooter>
     </Card>
   );
